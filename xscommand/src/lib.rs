@@ -4,10 +4,11 @@
 
 pub mod git;
 
+use std::fmt::Debug;
 
 /// Command used in
 /// XiangShan development
-pub trait XSCommand<'a, T: XSCommandErr> {
+pub trait XSCommand<'a, T: XSCommandErr + Debug> {
     /// Create a command
     fn new() -> Self;
     /// Set arguments
@@ -16,15 +17,18 @@ pub trait XSCommand<'a, T: XSCommandErr> {
     fn get_args(&self) -> Vec<&str>;
     /// Excute the command
     /// Return exit code 
-    fn excute(&mut self, res_path: &str) -> Result<Option<i32>, T>;
+    fn excute(&mut self, stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, T>;
 }
 
 /// XSCommand Error
 pub trait XSCommandErr{
+    /// to &str
     fn as_str(&self) -> &str;
+    /// return specified code
     fn err_code(&self) -> i32;
 }
-
+#[derive(Debug)]
+/// Default Error Type for XSCommand
 pub enum DefaultErr {
     SetArgsErr,
     ExcuteErr,
