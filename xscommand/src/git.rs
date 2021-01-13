@@ -14,6 +14,7 @@ use simple_logger::SimpleLogger;
 pub struct Git<'a> {
     exe: Command,
     args: Vec<&'a str>,
+    work_dir: Option<&'a str>,
 }
 
 
@@ -24,10 +25,12 @@ impl<'a> XSCommand<'a, GitErr> for Git<'a> {
         Self {
             exe: git,
             args,
+            work_dir: None,
         }
     }
 
     fn set_args(&mut self, args: Vec<&'a str>) -> Result<(), GitErr> {
+        // TODO: check the rationality of args
         self.args = args;
         Ok(())
     }
@@ -42,10 +45,13 @@ impl<'a> XSCommand<'a, GitErr> for Git<'a> {
         args
     }
 
+    fn set_workdir(&mut self, work_dir: &'a str) -> Result<(), GitErr> {
+        // TODO: check the rationality of workdir
+        self.work_dir = Some(work_dir);
+        Ok(())
+    }
+
     fn excute(&mut self, stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, GitErr> {
-        // Init the logger
-        // let logger = SimpleLogger::new();
-        // logger.init().unwrap();
         for arg in &self.args {
             self.exe.arg(arg);
         }
@@ -59,6 +65,9 @@ impl<'a> XSCommand<'a, GitErr> for Git<'a> {
             let stderr_fd = File::create(stderr_path).unwrap().into_raw_fd();
             let err_out = unsafe { Stdio::from_raw_fd(stderr_fd) };
             self.exe.stderr(err_out);
+        }
+        if let Some(dir) = self.work_dir {
+            self.exe.current_dir(dir);
         }
         let res = self.exe.status();
         match res {

@@ -1,7 +1,17 @@
 //! `xscommand` crate is for abstraction of command used in XiangShan development 
 //! like `sh`, `git` and `emu` which is a simulator in the development of XiangShan
 //! 
-
+//! The project use this crate should init the [logger](https://github.com/rust-lang/log) in the main.rs, like this:  
+//! ```no_run
+//! extern crate simple_logger;
+//! use simple_logger::SimpleLogger;
+//! 
+//! fn main() {
+//!     let logger = SimpleLogger::new();
+//!     logger.init().unwrap();
+//!     ...
+//! }
+//! ```
 pub mod git;
 
 use std::fmt::Debug;
@@ -15,6 +25,8 @@ pub trait XSCommand<'a, T: XSCommandErr + Debug> {
     fn set_args(&mut self, args: Vec<&'a str>) -> Result<(), T>;
     /// Get arguments
     fn get_args(&self) -> Vec<&str>;
+    /// Set the working dir for the XSCommand
+    fn set_workdir(&mut self, work_dir: &'a str) -> Result<(), T>;
     /// Excute the command
     /// Return exit code 
     fn excute(&mut self, stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, T>;
