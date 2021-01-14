@@ -9,9 +9,11 @@
 //! fn main() {
 //!     let logger = SimpleLogger::new();
 //!     logger.init().unwrap();
-//!     ...
 //! }
 //! ```
+//! 
+//! Never panic in this crate
+
 pub mod git;
 
 use std::fmt::Debug;
@@ -26,7 +28,7 @@ pub trait XSCommand<'a, T: XSCommandErr + Debug> {
     /// Get arguments
     fn get_args(&self) -> Vec<&str>;
     /// Set the working dir for the XSCommand
-    fn set_workdir(&mut self, work_dir: &'a str) -> Result<(), T>;
+    fn set_workdir(&mut self, work_dir: Option<&'a str>) -> Result<(), T>;
     /// Excute the command
     /// Return exit code 
     fn excute(&mut self, stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, T>;
