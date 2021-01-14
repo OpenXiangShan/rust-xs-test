@@ -1,14 +1,14 @@
-//! Git Command Implementation
+//! Git XSCommand Implementation
 //! 
 
-use super::{XSCommand, XSCommandErr};
+use super::{XSCommand, DefaultErr};
 use std::{
     fs::File,
     os::unix::io::{FromRawFd, IntoRawFd},
     process::{Command, Stdio}
 };
 
-/// Git Command
+/// Git XSCommand
 pub struct Git<'a> {
     exe: Command,
     args: Vec<&'a str>,
@@ -16,7 +16,7 @@ pub struct Git<'a> {
 }
 
 
-impl<'a> XSCommand<'a, GitErr> for Git<'a> {
+impl<'a> XSCommand<'a, DefaultErr> for Git<'a> {
     fn new() -> Self {
         let git = Command::new("git");
         let args = Vec::new();
@@ -27,8 +27,9 @@ impl<'a> XSCommand<'a, GitErr> for Git<'a> {
         }
     }
 
-    fn set_args(&mut self, args: Vec<&'a str>) -> Result<(), GitErr> {
+    fn set_args(&mut self, args: Vec<&'a str>) -> Result<(), DefaultErr> {
         // TODO: check the rationality of args
+        // Consider create a list to store available argements
         self.args = args;
         Ok(())
     }
@@ -43,13 +44,14 @@ impl<'a> XSCommand<'a, GitErr> for Git<'a> {
         args
     }
 
-    fn set_workdir(&mut self, work_dir: Option<&'a str>) -> Result<(), GitErr> {
+    fn set_workdir(&mut self, work_dir: Option<&'a str>) -> Result<(), DefaultErr> {
         // TODO: check the rationality of workdir
+        // Consider checking if the workdir readable and writable
         self.work_dir = work_dir;
         Ok(())
     }
 
-    fn excute(&mut self, stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, GitErr> {
+    fn excute(&mut self, stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, DefaultErr> {
         for arg in &self.args {
             self.exe.arg(arg);
         }
@@ -57,14 +59,29 @@ impl<'a> XSCommand<'a, GitErr> for Git<'a> {
         log::info!("git excute args: {:?} in workload: {}", self.args, workload);
         // TODO: use clouse here to reduce code lines
         if let Some(stdout_path) = stdout {
-            // TODO: should not panic here
-            let stdout_fd = File::create(stdout_path).unwrap().into_raw_fd();
+            let stdout_fd = match File::create(stdout_path) {
+                Ok(fd) => {
+                    fd.into_raw_fd()
+                },
+                Err(_) => {
+                    // TODO: return GitExcuteErr(err_code)
+                    todo!()
+                }
+            };
+            // let stdout_fd = File::create(stdout_path).unwrap().into_raw_fd();
             let std_out = unsafe { Stdio::from_raw_fd(stdout_fd) };
             self.exe.stdout(std_out);
         }
         if let Some(stderr_path) = stderr {
-            // TODO: should not panic here
-            let stderr_fd = File::create(stderr_path).unwrap().into_raw_fd();
+            let stderr_fd = match File::create(stderr_path) {
+                Ok(fd) => {
+                    fd.into_raw_fd()
+                },
+                Err(_) => {
+                    // TODO: return GitExcuteErr(err_code)
+                    todo!()
+                }
+            };
             let err_out = unsafe { Stdio::from_raw_fd(stderr_fd) };
             self.exe.stderr(err_out);
         }
@@ -79,31 +96,53 @@ impl<'a> XSCommand<'a, GitErr> for Git<'a> {
                     log::info!("git excute with exit code: {}", exit_code);
                     Ok(exit_code)
                 } else {
-                    // TODO: Return GitErr
+                    // TODO: return GitExcuteErr(err_code)
                     todo!()
                 }
             },
             Err(_) => {
-                // TODO: Error Handler or GitErr
+                // TODO: Error Handler or return GitExcuteErr(err_code)
                 todo!();
             }
         }
     }
+
+    fn to_string(&self) -> String {
+        let mut name = String::from("git");
+        for arg in &self.args {
+            name.push_str(" ");
+            name.push_str(*arg);
+        }
+        name
+    }
 }
 
-#[derive(Debug)]
-pub enum GitErr {
-    // TODO
-}
+// #[derive(Debug)]
+// pub enum GitErr {
+//     GitSetArgsErr,
+//     GitSetWorkDirErr,
+//     GitExcuteErr(i32),
+// }
 
-impl XSCommandErr for GitErr {
-    fn as_str(&self) -> &str {
-        todo!()
-    }
+// impl XSCommandErr for GitErr {
+//     fn as_str(&self) -> &str {
+//         match self {
+//             GitErr::GitSetArgsErr => "Git Set Args Error",
+//             GitErr::GitSetWorkDirErr => "Git Set WorkDir Error",
+//             GitErr::GitExcuteErr(_) => "Git Excute Error",
+//         }
+//     }
 
-    fn err_code(&self) -> i32 {
-        todo!()
-    }
+//     fn err_code(&self) -> i32 {
+//         todo!()
+//     }
+// }
+
+#[test]
+fn test_to_string() {
+    let mut git = Git::new();
+    git.set_args(vec!["clone", "https://github.com/SKTT1Ryze/rust-xs-evaluation"]).unwrap();
+    assert_eq!(git.to_string(), String::from("git clone https://github.com/SKTT1Ryze/rust-xs-evaluation"));
 }
 
 #[test]
@@ -132,12 +171,6 @@ fn test_git_version() {
     if workload.exists() {
         fs::remove_dir_all(workload).unwrap();
     } 
-    // if stdout_file.exists() {
-    //     fs::remove_file(stdout_file).unwrap();
-    // }
-    // if stderr_file.exists() {
-    //     fs::remove_file(stderr_file).unwrap();
-    // }
 }
 
 // TODO: add more test
@@ -170,12 +203,6 @@ fn test_git_status() {
     if workload.exists() {
         fs::remove_dir_all(workload).unwrap();
     }
-    // if stdout_file.exists() {
-    //     fs::remove_file(stdout_file).unwrap();
-    // }
-    // if stderr_file.exists() {
-    //     fs::remove_file(stderr_file).unwrap();
-    // }
 }
 
 #[test]
@@ -212,14 +239,6 @@ fn test_git_clone() {
     if workload.exists() {
         fs::remove_dir_all(workload).unwrap();
     }
-    // if stdout_file.exists() {
-    //     fs::remove_file(stdout_file).unwrap();
-    // }
-    // // File::create(stderr_file).unwrap();
-    // if stderr_file.exists() {
-    //     fs::remove_file(stderr_file).unwrap();
-    // }
-    
 }
 
 #[test]
@@ -260,12 +279,4 @@ fn test_git_pull() {
     if workload.exists() {
         fs::remove_dir_all(workload).unwrap();
     }
-    // if stdout_file.exists() {
-    //     fs::remove_file(stdout_file).unwrap();
-    // }
-    // // File::create(stderr_file).unwrap();
-    // if stderr_file.exists() {
-    //     fs::remove_file(stderr_file).unwrap();
-    // }
-    
 }

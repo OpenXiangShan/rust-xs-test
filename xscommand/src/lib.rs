@@ -15,6 +15,7 @@
 //! Never panic in this crate
 
 pub mod git;
+pub mod make;
 
 use std::fmt::Debug;
 
@@ -32,7 +33,7 @@ pub trait XSCommand<'a, T: XSCommandErr + Debug> {
     /// Excute the command
     /// Return exit code 
     fn excute(&mut self, stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, T>;
-    // TODO: fn as_str(&self) -> &str;
+    fn to_string(&self) -> String;
 }
 
 /// XSCommand Error
@@ -46,14 +47,16 @@ pub trait XSCommandErr{
 /// Default Error Type for XSCommand
 pub enum DefaultErr {
     SetArgsErr,
-    ExcuteErr,
+    SetWorkDirErr,
+    ExcuteErr(i32),
 }
 
 impl XSCommandErr for DefaultErr {
     fn as_str(&self) -> &str {
         match self {
             DefaultErr::SetArgsErr => "Default Set Args Error",
-            DefaultErr::ExcuteErr => "Default Excute Err",
+            DefaultErr::SetWorkDirErr  => "Default Set workload Error",
+            DefaultErr::ExcuteErr(_) => "Default Excute Err",
         }
     }
     fn err_code(&self) -> i32 {

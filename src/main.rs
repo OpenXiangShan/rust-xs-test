@@ -16,7 +16,7 @@ use xscommand::{
     git::Git,
 };
 use threadpool::ThreadPool;
-use chrono::{LocalResult, prelude::*};
+use chrono::prelude::*;
 
 const WORKERS_NUM: usize = 5;
 const WORK_ROOT: &str = "/home/hustccc/rust_xs_test_workload";
