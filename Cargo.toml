@@ -10,3 +10,6 @@ edition = "2018"
 xscommand = { path = "xscommand" }
 simple_logger = "1.11.0"
 log = "0.4"
+threadpool = "1.0"
+thread-id = "3.3.0"
+chrono = "0.4"

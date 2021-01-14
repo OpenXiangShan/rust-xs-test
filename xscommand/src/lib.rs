@@ -32,6 +32,7 @@ pub trait XSCommand<'a, T: XSCommandErr + Debug> {
     /// Excute the command
     /// Return exit code 
     fn excute(&mut self, stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, T>;
+    // TODO: fn as_str(&self) -> &str;
 }
 
 /// XSCommand Error
@@ -51,8 +52,8 @@ pub enum DefaultErr {
 impl XSCommandErr for DefaultErr {
     fn as_str(&self) -> &str {
         match self {
-            DefaultErr::SetArgsErr => "default set args err",
-            DefaultErr::ExcuteErr => "default excute err",
+            DefaultErr::SetArgsErr => "Default Set Args Error",
+            DefaultErr::ExcuteErr => "Default Excute Err",
         }
     }
     fn err_code(&self) -> i32 {
