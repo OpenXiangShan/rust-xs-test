@@ -16,6 +16,9 @@
 
 pub mod git;
 pub mod make;
+pub mod just;
+
+extern crate xscommand_macros;
 
 use std::fmt::Debug;
 

@@ -1,5 +1,5 @@
 [package]
-name = "macros"
+name = "xscommand-macros"
 version = "0.1.0"
 authors = ["hustccc <1276675421@qq.com>"]
 edition = "2018"
@@ -12,7 +12,6 @@ proc-macro = true
 [dependencies]
 quote = "1.0"
 proc-macro2 = "1.0"
-xscommand = { path = ".." }
 
 
 [dependencies.syn]

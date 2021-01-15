@@ -1,5 +1,5 @@
-//! Git XSCommand Implementation
-//! 
+/// Git XSCommand Implementation
+/// 
 
 use super::{XSCommand, DefaultErr};
 use std::{
@@ -7,8 +7,10 @@ use std::{
     os::unix::io::{FromRawFd, IntoRawFd},
     process::{Command, Stdio}
 };
+use xscommand_macros::XSCommand;
 
 /// Git XSCommand
+#[derive(XSCommand)]
 pub struct Git<'a> {
     exe: Command,
     args: Vec<&'a str>,
@@ -16,106 +18,106 @@ pub struct Git<'a> {
 }
 
 
-impl<'a> XSCommand<'a, DefaultErr> for Git<'a> {
-    fn new() -> Self {
-        let git = Command::new("git");
-        let args = Vec::new();
-        Self {
-            exe: git,
-            args,
-            work_dir: None,
-        }
-    }
+// impl<'a> XSCommand<'a, DefaultErr> for Git<'a> {
+//     fn new() -> Self {
+//         let git = Command::new("git");
+//         let args = Vec::new();
+//         Self {
+//             exe: git,
+//             args,
+//             work_dir: None,
+//         }
+//     }
 
-    fn set_args(&mut self, args: Vec<&'a str>) -> Result<(), DefaultErr> {
-        // TODO: check the rationality of args
-        // Consider create a list to store available argements
-        self.args = args;
-        Ok(())
-    }
+//     fn set_args(&mut self, args: Vec<&'a str>) -> Result<(), DefaultErr> {
+//         // TODO: check the rationality of args
+//         // Consider create a list to store available argements
+//         self.args = args;
+//         Ok(())
+//     }
 
-    fn get_args(&self) -> Vec<&str> {
-        // let mut args = Vec::new();
-        // for arg in &self.args {
-        //     args.push(*arg);
-        // }
-        // I can write beautiful code like this now!
-        let args: Vec<&str> = self.args.iter().map(|a| *a).collect();
-        args
-    }
+//     fn get_args(&self) -> Vec<&str> {
+//         // let mut args = Vec::new();
+//         // for arg in &self.args {
+//         //     args.push(*arg);
+//         // }
+//         // I can write beautiful code like this now!
+//         let args: Vec<&str> = self.args.iter().map(|a| *a).collect();
+//         args
+//     }
 
-    fn set_workdir(&mut self, work_dir: Option<&'a str>) -> Result<(), DefaultErr> {
-        // TODO: check the rationality of workdir
-        // Consider checking if the workdir readable and writable
-        self.work_dir = work_dir;
-        Ok(())
-    }
+//     fn set_workdir(&mut self, work_dir: Option<&'a str>) -> Result<(), DefaultErr> {
+//         // TODO: check the rationality of workdir
+//         // Consider checking if the workdir readable and writable
+//         self.work_dir = work_dir;
+//         Ok(())
+//     }
 
-    fn excute(&mut self, stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, DefaultErr> {
-        for arg in &self.args {
-            self.exe.arg(arg);
-        }
-        let workload = if let Some(dir) = self.work_dir { dir } else { "./" };
-        log::info!("git excute args: {:?} in workload: {}", self.args, workload);
-        // TODO: use clouse here to reduce code lines
-        if let Some(stdout_path) = stdout {
-            let stdout_fd = match File::create(stdout_path) {
-                Ok(fd) => {
-                    fd.into_raw_fd()
-                },
-                Err(_) => {
-                    // TODO: return GitExcuteErr(err_code)
-                    todo!()
-                }
-            };
-            // let stdout_fd = File::create(stdout_path).unwrap().into_raw_fd();
-            let std_out = unsafe { Stdio::from_raw_fd(stdout_fd) };
-            self.exe.stdout(std_out);
-        }
-        if let Some(stderr_path) = stderr {
-            let stderr_fd = match File::create(stderr_path) {
-                Ok(fd) => {
-                    fd.into_raw_fd()
-                },
-                Err(_) => {
-                    // TODO: return GitExcuteErr(err_code)
-                    todo!()
-                }
-            };
-            let err_out = unsafe { Stdio::from_raw_fd(stderr_fd) };
-            self.exe.stderr(err_out);
-        }
-        if let Some(dir) = self.work_dir {
-            self.exe.current_dir(dir);
-        }
-        // Block here until command return
-        let res = self.exe.status();
-        match res {
-            Ok(exit_status) => {
-                if let Some(exit_code) = exit_status.code() {
-                    log::info!("git excute with exit code: {}", exit_code);
-                    Ok(exit_code)
-                } else {
-                    // TODO: return GitExcuteErr(err_code)
-                    todo!()
-                }
-            },
-            Err(_) => {
-                // TODO: Error Handler or return GitExcuteErr(err_code)
-                todo!();
-            }
-        }
-    }
+//     fn excute(&mut self, stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, DefaultErr> {
+//         for arg in &self.args {
+//             self.exe.arg(arg);
+//         }
+//         let workload = if let Some(dir) = self.work_dir { dir } else { "./" };
+//         log::info!("git excute args: {:?} in workload: {}", self.args, workload);
+//         // TODO: use clouse here to reduce code lines
+//         if let Some(stdout_path) = stdout {
+//             let stdout_fd = match File::create(stdout_path) {
+//                 Ok(fd) => {
+//                     fd.into_raw_fd()
+//                 },
+//                 Err(_) => {
+//                     // TODO: return GitExcuteErr(err_code)
+//                     todo!()
+//                 }
+//             };
+//             // let stdout_fd = File::create(stdout_path).unwrap().into_raw_fd();
+//             let std_out = unsafe { Stdio::from_raw_fd(stdout_fd) };
+//             self.exe.stdout(std_out);
+//         }
+//         if let Some(stderr_path) = stderr {
+//             let stderr_fd = match File::create(stderr_path) {
+//                 Ok(fd) => {
+//                     fd.into_raw_fd()
+//                 },
+//                 Err(_) => {
+//                     // TODO: return GitExcuteErr(err_code)
+//                     todo!()
+//                 }
+//             };
+//             let err_out = unsafe { Stdio::from_raw_fd(stderr_fd) };
+//             self.exe.stderr(err_out);
+//         }
+//         if let Some(dir) = self.work_dir {
+//             self.exe.current_dir(dir);
+//         }
+//         // Block here until command return
+//         let res = self.exe.status();
+//         match res {
+//             Ok(exit_status) => {
+//                 if let Some(exit_code) = exit_status.code() {
+//                     log::info!("git excute with exit code: {}", exit_code);
+//                     Ok(exit_code)
+//                 } else {
+//                     // TODO: return GitExcuteErr(err_code)
+//                     todo!()
+//                 }
+//             },
+//             Err(_) => {
+//                 // TODO: Error Handler or return GitExcuteErr(err_code)
+//                 todo!();
+//             }
+//         }
+//     }
 
-    fn to_string(&self) -> String {
-        let mut name = String::from("git");
-        for arg in &self.args {
-            name.push_str(" ");
-            name.push_str(*arg);
-        }
-        name
-    }
-}
+//     fn to_string(&self) -> String {
+//         let mut name = String::from("git");
+//         for arg in &self.args {
+//             name.push_str(" ");
+//             name.push_str(*arg);
+//         }
+//         name
+//     }
+// }
 
 // #[derive(Debug)]
 // pub enum GitErr {
