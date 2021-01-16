@@ -12,7 +12,7 @@ use xscommand_macros::XSCommand;
 /// Git XSCommand
 #[derive(XSCommand)]
 pub struct Git<'a> {
-    exe: Command,
+    pub exe: Command,
     args: Vec<&'a str>,
     work_dir: Option<&'a str>,
 }
@@ -142,7 +142,7 @@ pub struct Git<'a> {
 
 #[test]
 fn test_to_string() {
-    let mut git = Git::new();
+    let mut git = Git::set_exe("git");
     git.set_args(vec!["clone", "https://github.com/SKTT1Ryze/rust-xs-evaluation"]).unwrap();
     assert_eq!(git.to_string(), String::from("git clone https://github.com/SKTT1Ryze/rust-xs-evaluation"));
 }
@@ -158,7 +158,7 @@ fn test_git_version() {
     }
     let stdout_file = workload.join("git_version_stdout.txt");
     let stderr_file = workload.join("git_version_stderr.txt");
-    let mut git = Git::new();
+    let mut git = Git::set_exe("git");
     let args = vec!["--version"];
     git.set_args(args).unwrap();
     git.set_workdir(workload.to_str()).unwrap();
@@ -175,6 +175,33 @@ fn test_git_version() {
     } 
 }
 
+#[test]
+fn test_git_log() {
+    use std::fs;
+    use std::path::Path;
+    let workload = Path::new("git_log_test");
+    if !workload.exists() {
+        // workload not exists, create
+        fs::create_dir(workload).unwrap();
+    }
+    let stdout_file = workload.join("git_log_stdout.txt");
+    let stderr_file = workload.join("git_log_stderr.txt");
+    let mut git = Git::set_exe("git");
+    let args = vec!["log"];
+    git.set_args(args).unwrap();
+    git.set_workdir(workload.to_str()).unwrap();
+    match git.excute(stdout_file.to_str(), stderr_file.to_str()) {
+        Ok(exit_code) => {
+            assert_eq!(exit_code, 0);
+        },
+        Err(errtype) => panic!("ErrType: {:?}", errtype),
+    }
+    // TODO: check the content of `stdout` and `stderr`
+    // remove a dir after removing all its contents
+    if workload.exists() {
+        fs::remove_dir_all(workload).unwrap();
+    } 
+}
 // TODO: add more test
 #[test]
 fn test_git_status() {
@@ -187,7 +214,7 @@ fn test_git_status() {
     }
     let stdout_file = workload.join("git_status_stdout.txt");
     let stderr_file = workload.join("git_status_stderr.txt");
-    let mut git = Git::new();
+    let mut git = Git::set_exe("git");
     let args = vec!["status", "--help"];
     match git.set_args(args) {
         Err(errtype) => panic!("ErrType: {:?}", errtype),
@@ -223,7 +250,7 @@ fn test_git_clone() {
     if repo_path.exists() {
         fs::remove_dir_all(repo_path).unwrap();
     }
-    let mut git = Git::new();
+    let mut git = Git::set_exe("git");
     let args = vec!["clone", repo];
     match git.set_args(args) {
         Err(errtype) => panic!("ErrType: {:?}", errtype),
@@ -267,7 +294,7 @@ fn test_git_pull() {
         .spawn()
         .unwrap();
     git_clone.wait().unwrap();
-    let mut git = Git::new();
+    let mut git = Git::set_exe("git");
     let args = vec!["pull"];
     git.set_args(args).unwrap();
     git.set_workdir(workload.to_str()).unwrap();

@@ -1,2 +1,2 @@
-# rust-xs-test
-Auto Background Test Routine for XiangShan Processor
+# rust-xs-test（开发中）
+Auto Test Routine Under the Hood for XiangShan Processor

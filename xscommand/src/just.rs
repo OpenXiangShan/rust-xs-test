@@ -13,14 +13,14 @@ use xscommand_macros::XSCommand;
 /// Just XSCommand
 #[derive(XSCommand)]
 pub struct Just<'a> {
-    exe: Command,
+    pub exe: Command,
     args: Vec<&'a str>,
     work_dir: Option<&'a str>,
 }
 
 #[test]
 fn test_to_string() {
-    let mut just = Just::new();
+    let mut just = Just::set_exe("just");
     just.set_args(vec!["run", "test"]).unwrap();
     assert_eq!(just.to_string(), String::from("just run test"));
 }
@@ -36,7 +36,7 @@ fn test_just_version() {
     }
     let stdout_file = workload.join("just_version_stdout.txt");
     let stderr_file = workload.join("just_version_stderr.txt");
-    let mut just = Just::new();
+    let mut just = Just::set_exe("just");
     let args = vec!["--version"];
     just.set_args(args).unwrap();
     just.set_workdir(workload.to_str()).unwrap();
@@ -64,7 +64,7 @@ fn test_just_help() {
     }
     let stdout_file = workload.join("just_help_stdout.txt");
     let stderr_file = workload.join("just_help_stderr.txt");
-    let mut just = Just::new();
+    let mut just = Just::set_exe("just");
     let args = vec!["--help"];
     just.set_args(args).unwrap();
     just.set_workdir(workload.to_str()).unwrap();

@@ -17,6 +17,7 @@
 pub mod git;
 pub mod make;
 pub mod just;
+pub mod emu;
 
 extern crate xscommand_macros;
 
@@ -26,7 +27,7 @@ use std::fmt::Debug;
 /// XiangShan development
 pub trait XSCommand<'a, T: XSCommandErr + Debug> {
     /// Create a command
-    fn new() -> Self;
+    fn set_exe(path: &str) -> Self;
     /// Set arguments
     fn set_args(&mut self, args: Vec<&'a str>) -> Result<(), T>;
     /// Get arguments

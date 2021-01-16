@@ -13,7 +13,7 @@ use xscommand_macros::XSCommand;
 /// Make XSCommand
 #[derive(XSCommand)]
 pub struct Make<'a> {
-    exe: Command,
+    pub exe: Command,
     args: Vec<&'a str>,
     work_dir: Option<&'a str>,
 }
@@ -142,7 +142,7 @@ pub struct Make<'a> {
 
 #[test]
 fn test_to_string() {
-    let mut make = Make::new();
+    let mut make = Make::set_exe("make");
     make.set_args(vec!["emu", "EMU_TRACE=1", "SIM_ARGS=\"--disable-all\"", "EMU_THREADS=8", "-j10"]).unwrap();
     assert_eq!(make.to_string(), String::from("make emu EMU_TRACE=1 SIM_ARGS=\"--disable-all\" EMU_THREADS=8 -j10"));
 }
@@ -158,7 +158,7 @@ fn test_make_version() {
     }
     let stdout_file = workload.join("make_version_stdout.txt");
     let stderr_file = workload.join("make_version_stderr.txt");
-    let mut make = Make::new();
+    let mut make = Make::set_exe("make");
     let args = vec!["--version"];
     make.set_args(args).unwrap();
     make.set_workdir(workload.to_str()).unwrap();
@@ -186,7 +186,7 @@ fn test_make_help() {
     }
     let stdout_file = workload.join("make_help_stdout.txt");
     let stderr_file = workload.join("make_help_stderr.txt");
-    let mut make = Make::new();
+    let mut make = Make::set_exe("make");
     let args = vec!["--help"];
     make.set_args(args).unwrap();
     make.set_workdir(workload.to_str()).unwrap();
