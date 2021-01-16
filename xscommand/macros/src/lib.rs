@@ -17,7 +17,7 @@ pub fn xscommand_derive(input: TokenStream) -> TokenStream {
     let gen = quote! {
         impl<'a> XSCommand<'a, DefaultErr> for #name<'a> {
             fn set_exe(path: &str) -> Self {
-                let exe  = Command::new(stringify!(#name).to_ascii_lowercase());
+                let exe  = Command::new(path);
                 let args = Vec::new();
                 Self {
                     exe,

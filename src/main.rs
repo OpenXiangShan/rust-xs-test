@@ -7,15 +7,19 @@ extern crate simple_logger;
 extern crate threadpool;
 extern crate thread_id;
 extern crate chrono;
+extern crate psutil;
+
 #[allow(unused_imports)]
 use std::{fs, path::Path, process::{Command, exit}, thread, time::Duration, vec};
 use simple_logger::SimpleLogger;
+#[allow(unused_imports)]
 use xscommand::{
     XSCommand,
     XSCommandErr,
     git::Git,
     make::Make,
     emu::Emu,
+    numactl::Numactl,
 };
 use threadpool::ThreadPool;
 use chrono::prelude::*;
@@ -83,6 +87,10 @@ fn main() -> ! {
                 match git.excute(stdout_f.to_str(), stderr_f.to_str()) {
                     Ok(exit_code) => {
                         log::info!("git with args: {:?} excute return {}", git.get_args(), exit_code);
+                        if exit_code != 0 {
+                            log::error!("exit not zero, thread {} exit.", thread_id::get());
+                            exit(-1);
+                        }
                     },
                     Err(git_err) => {
                         log::error!("{}, thread {} exit.", git_err.as_str(), thread_id::get());
@@ -117,6 +125,10 @@ fn main() -> ! {
                 match make.excute(stdout_f.to_str(), stderr_f.to_str()) {
                     Ok(exit_code) => {
                         log::info!("make with args: {:?} excute return {}", make.get_args(), exit_code);
+                        if exit_code != 0 {
+                            log::error!("exit not zero, thread {} exit.", thread_id::get());
+                            exit(-1);
+                        }
                     },
                     Err(make_err) => {
                         log::error!("{}, thread {} exit.", make_err.as_str(), thread_id::get());
@@ -130,8 +142,8 @@ fn main() -> ! {
             {
                 let stdout_f = workload.join("stdout.txt");
                 let stderr_f = workload.join("stderr.txt");
-                let mut make = Make::set_exe("make");
-                match make.set_args(vec!["emu"]) {
+                let mut make = Make::set_exe("numactl");
+                match make.set_args(vec!["-C", "0-63", "make", "emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-all\"", "EMU_THREADS=8", "-j64"]) {
                     Ok(_) => {}, // do nothing
                     Err(make_err) => {
                         log::error!("{}, thread {} exit", make_err.as_str(), thread_id::get());
@@ -152,6 +164,10 @@ fn main() -> ! {
                 match make.excute(stdout_f.to_str(), stderr_f.to_str()) {
                     Ok(exit_code) => {
                         log::info!("make with args: {:?} excute return {}", make.get_args(), exit_code);
+                        if exit_code != 0 {
+                            log::error!("exit not zero, thread {} exit.", thread_id::get());
+                            exit(-1);
+                        }
                     },
                     Err(make_err) => {
                         log::error!("{}, thread {} exit.", make_err.as_str(), thread_id::get());
@@ -162,7 +178,7 @@ fn main() -> ! {
                 // make drop here
             }
             // create ../emu_res dir && 
-            // emu -I 1000000 -i /bigdata/zyy/checkpoints_profiles/betapoint_profile_06/gcc_200/0/_8000000000_.gz
+            // numactl -C [] emu -I 1000000 -i /bigdata/zyy/checkpoints_profiles/betapoint_profile_06/gcc_200/0/_8000000000_.gz
             let res_dir = workload.join("../emu_res");
             {
                 if !res_dir.exists() {
@@ -179,14 +195,61 @@ fn main() -> ! {
                 let stdout_f = res_dir.join("stdout.txt");
                 let stderr_f = res_dir.join("stderr.txt");
                 let emu_path = workload.join("./build/emu");
-                let mut emu = if let Some(path) = emu_path.to_str() {
+                let emu = if let Some(path) = emu_path.to_str() {
                     log::info!("create emu in {}", path);
-                    Emu::set_exe(path)
+                    path
                 } else {
-                    log::info!("no path in emu_path, thread {} exit", thread_id::get());
+                    log::error!("no path in emu_path, thread {} exit", thread_id::get());
                     exit(-1);
-                };                
-                match emu.set_args(vec!["-I", "1000000", "-i", EMU_TARGET]) {
+                };
+                let mut cpu_percent_collector = match psutil::cpu::CpuPercentCollector::new() {
+                    Ok(collector) => collector,
+                    Err(_) => {
+                        log::error!("new CpuPercentCollector error, thread {} exit.", thread_id::get());
+                        exit(-1);
+                    }
+                };
+                let mut numactl = Numactl::set_exe("numactl");
+                let cpu_percents = match cpu_percent_collector.cpu_percent_percpu() {
+                    Ok(percents) => percents,
+                    Err(_) => {
+                        log::error!("get cpu_percent_percpu error, thread {} exit.", thread_id::get());
+                        exit(-1);
+                    }
+                };
+                let (mut begin, mut end) = (0, 0);
+                let mut count = 0;
+                for _ in 0..3 {
+                    begin = 0;
+                    end = 0;
+                    for i in 0..cpu_percents.len() {
+                        if cpu_percents[i] > 50.0 {
+                            begin += 1;
+                            end = begin;
+                        } else {
+                            end += 1;
+                        }
+                        if (end - begin) >= 7 {
+                            // found 8 free cpus, break
+                            break;
+                        }
+                    }
+                    if (end - begin) >= 7 {
+                        log::info!("found avaiable 8 cpus, ready to run emu.");
+                        break;
+                    }
+                    count += 1;
+                    thread::sleep(Duration::from_secs(SLEEP_TIME * 100));
+                }
+                if count >= 3 {
+                    log::error!("no 8 cpus avaiable, thread {} exit.", thread_id::get());
+                    exit(-1);
+                }
+                let mut cpu_ids = begin.to_string();
+                cpu_ids.push_str("-");
+                cpu_ids.push_str(end.to_string().as_str());
+                log::info!("avaiable cpus: {}", cpu_ids);
+                match numactl.set_args(vec!["-C", cpu_ids.as_str(), emu, "-I", "1000000", "-i", EMU_TARGET]) {
                     Ok(_) => {}, // do nothing
                     Err(emu_err) => {
                         log::error!("{}, thread {} exit", emu_err.as_str(), thread_id::get());
@@ -194,7 +257,7 @@ fn main() -> ! {
                         exit(-1);
                     }
                 }
-                match emu.set_workdir(workload.to_str()) {
+                match numactl.set_workdir(workload.to_str()) {
                     Ok(_) => {}, // do nothing
                     Err(emu_err) => {
                         log::error!("{}, thread {} exit", emu_err.as_str(), thread_id::get());
@@ -203,12 +266,16 @@ fn main() -> ! {
                     }
                 }
                 // set env `NOOP_HOME` to currnet workload
-                emu.exe.env("NOOP_HOME", workload.to_path_buf());
-                emu.exe.env("NEMU_HOME", NEMU_HOME);
-                emu.exe.env("AM_HOME", AM_HOME);
-                match emu.excute(stdout_f.to_str(), stderr_f.to_str()) {
+                numactl.exe.env("NOOP_HOME", workload.to_path_buf());
+                numactl.exe.env("NEMU_HOME", NEMU_HOME);
+                numactl.exe.env("AM_HOME", AM_HOME);
+                match numactl.excute(stdout_f.to_str(), stderr_f.to_str()) {
                     Ok(exit_code) => {
-                        log::info!("make with args: {:?} excute return {}", emu.get_args(), exit_code);
+                        log::info!("make with args: {:?} excute return {}", numactl.get_args(), exit_code);
+                        if exit_code != 0 {
+                            log::error!("exit not zero, thread {} exit.", thread_id::get());
+                            exit(-1);
+                        }
                     },
                     Err(emu_err) => {
                         log::error!("{}, thread {} exit.", emu_err.as_str(), thread_id::get());

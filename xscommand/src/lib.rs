@@ -18,6 +18,7 @@ pub mod git;
 pub mod make;
 pub mod just;
 pub mod emu;
+pub mod numactl;
 
 extern crate xscommand_macros;
 
