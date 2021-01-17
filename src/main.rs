@@ -64,17 +64,10 @@ fn main() -> ! {
             {
                 let stdout_f = workload.join("stdout.txt");
                 let stderr_f = workload.join("stderr.txt");
-                let mut git = Git::set_exe("git");
+                let mut git = Git::new("git");
                 let args = vec!["clone", repo_url];
                 // use macro to reduce below code lines
-                match git.set_args(args) {
-                    Ok(_) => {}, // do nothing
-                    Err(git_err) => {
-                        log::error!("{}, thread {} exit.", git_err.as_str(), thread_id::get());
-                        // TODO: specify exit code
-                        exit(-1);
-                    }
-                }
+                git.set_args(args);
                 match git.set_workdir(workload.to_str()) {
                     Ok(_) => {}, // do nothing
                     Err(git_err) => {
@@ -104,15 +97,8 @@ fn main() -> ! {
             {
                 let stdout_f = workload.join("stdout.txt");
                 let stderr_f = workload.join("stderr.txt");
-                let mut make = Make::set_exe("make");
-                match make.set_args(vec!["init"]) {
-                    Ok(_) => {}, // do nothing
-                    Err(make_err) => {
-                        log::error!("{}, thread {} exit", make_err.as_str(), thread_id::get());
-                        // TODO: specify exit code
-                        exit(-1);
-                    }
-                }
+                let mut make = Make::new("make");
+                make.set_args(vec!["init"]);
                 match make.set_workdir(workload.to_str()) {
                     Ok(_) => {}, // do nothing
                     Err(make_err) => {
@@ -141,15 +127,8 @@ fn main() -> ! {
             {
                 let stdout_f = workload.join("stdout.txt");
                 let stderr_f = workload.join("stderr.txt");
-                let mut make = Make::set_exe("numactl");
-                match make.set_args(vec!["-C", "0-63", "make", "build/emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-all\"", "EMU_THREADS=8", "-j64"]) {
-                    Ok(_) => {}, // do nothing
-                    Err(make_err) => {
-                        log::error!("{}, thread {} exit", make_err.as_str(), thread_id::get());
-                        // TODO: specify exit code
-                        exit(-1);
-                    }
-                }
+                let mut make = Make::new("numactl");
+                make.set_args(vec!["-C", "0-63", "make", "build/emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-all\"", "EMU_THREADS=8", "-j64"]);
                 match make.set_workdir(workload.to_str()) {
                     Ok(_) => {}, // do nothing
                     Err(make_err) => {
@@ -208,7 +187,7 @@ fn main() -> ! {
                         exit(-1);
                     }
                 };
-                let mut numactl = Numactl::set_exe("numactl");
+                let mut numactl = Numactl::new("numactl");
                 let cpu_percents = match cpu_percent_collector.cpu_percent_percpu() {
                     Ok(percents) => percents,
                     Err(_) => {
@@ -248,14 +227,7 @@ fn main() -> ! {
                 cpu_ids.push_str("-");
                 cpu_ids.push_str(end.to_string().as_str());
                 log::info!("avaiable cpus: {}", cpu_ids);
-                match numactl.set_args(vec!["-C", cpu_ids.as_str(), emu, "-I", "1000000", "-i", EMU_TARGET]) {
-                    Ok(_) => {}, // do nothing
-                    Err(emu_err) => {
-                        log::error!("{}, thread {} exit", emu_err.as_str(), thread_id::get());
-                        // TODO: specify exit code
-                        exit(-1);
-                    }
-                }
+                numactl.set_args(vec!["-C", cpu_ids.as_str(), emu, "-I", "1000000", "-i", EMU_TARGET]);
                 match numactl.set_workdir(workload.to_str()) {
                     Ok(_) => {}, // do nothing
                     Err(emu_err) => {

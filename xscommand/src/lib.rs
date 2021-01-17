@@ -28,9 +28,9 @@ use std::fmt::Debug;
 /// XiangShan development
 pub trait XSCommand<'a, T: XSCommandErr + Debug> {
     /// Create a command
-    fn set_exe(path: &str) -> Self;
+    fn new(path: &str) -> Self;
     /// Set arguments
-    fn set_args(&mut self, args: Vec<&'a str>) -> Result<(), T>;
+    fn set_args(&mut self, args: Vec<&'a str>);
     /// Get arguments
     fn get_args(&self) -> Vec<&str>;
     /// Set the working dir for the XSCommand
@@ -51,7 +51,6 @@ pub trait XSCommandErr{
 #[derive(Debug)]
 /// Default Error Type for XSCommand
 pub enum DefaultErr {
-    SetArgsErr,
     SetWorkDirErr,
     ExcuteErr(i32),
 }
@@ -59,15 +58,13 @@ pub enum DefaultErr {
 impl XSCommandErr for DefaultErr {
     fn as_str(&self) -> &str {
         match self {
-            DefaultErr::SetArgsErr => "Default Set Args Error",
             DefaultErr::SetWorkDirErr  => "Default Set workload Error",
             DefaultErr::ExcuteErr(_) => "Default Excute Error",
         }
     }
     fn err_code(&self) -> i32 {
         match self {
-            DefaultErr::SetArgsErr => 1,
-            DefaultErr::SetWorkDirErr => 2,
+            DefaultErr::SetWorkDirErr => 1,
             DefaultErr::ExcuteErr(err_code) => *err_code,
         }
     }

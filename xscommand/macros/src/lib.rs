@@ -16,7 +16,7 @@ pub fn xscommand_derive(input: TokenStream) -> TokenStream {
     let name = ast.ident;
     let gen = quote! {
         impl<'a> XSCommand<'a, DefaultErr> for #name<'a> {
-            fn set_exe(path: &str) -> Self {
+            fn new(path: &str) -> Self {
                 let exe  = Command::new(path);
                 let args = Vec::new();
                 Self {
@@ -26,11 +26,8 @@ pub fn xscommand_derive(input: TokenStream) -> TokenStream {
                 }
             }
 
-            fn set_args(&mut self, args: Vec<&'a str>) -> Result<(), DefaultErr> {
-                // TODO: check the rationality of args
-                // Consider create a list to store available argements
+            fn set_args(&mut self, args: Vec<&'a str>) {
                 self.args = args;
-                Ok(())
             }
 
             fn get_args(&self) -> Vec<&str> {
@@ -63,7 +60,7 @@ pub fn xscommand_derive(input: TokenStream) -> TokenStream {
                             fd.into_raw_fd()
                         },
                         Err(_) => {
-                            return Err(DefaultErr::ExcuteErr(3));
+                            return Err(DefaultErr::ExcuteErr(2));
                         }
                     };
                     // let stdout_fd = File::create(stdout_path).unwrap().into_raw_fd();
@@ -76,7 +73,7 @@ pub fn xscommand_derive(input: TokenStream) -> TokenStream {
                             fd.into_raw_fd()
                         },
                         Err(_) => {
-                            return Err(DefaultErr::ExcuteErr(4));
+                            return Err(DefaultErr::ExcuteErr(3));
                         }
                     };
                     let err_out = unsafe { Stdio::from_raw_fd(stderr_fd) };
@@ -93,11 +90,12 @@ pub fn xscommand_derive(input: TokenStream) -> TokenStream {
                             log::info!("{} excute with exit code: {}", stringify!(#name).to_ascii_lowercase(), exit_code);
                             Ok(exit_code)
                         } else {
-                            return Err(DefaultErr::ExcuteErr(5));
+                            log::error!("{} excute return without exit code", stringify!(#name).to_ascii_lowercase());
+                            return Err(DefaultErr::ExcuteErr(4));
                         }
                     },
                     Err(_) => {
-                        return Err(DefaultErr::ExcuteErr(6));
+                        return Err(DefaultErr::ExcuteErr(5));
                     }
                 }
             }

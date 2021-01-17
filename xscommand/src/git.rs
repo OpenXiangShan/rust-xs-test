@@ -20,10 +20,8 @@ pub struct Git<'a> {
 impl<'a> Git<'a> {
     // git version
     pub fn version() -> Result<i32, i32> {
-        let mut git = Git::set_exe("git");
-        if let Err(err_code) = git.set_args(vec!["version"]) {
-            return Err(err_code.err_code());
-        };
+        let mut git = Git::new("git");
+        git.set_args(vec!["version"]);
         match git.excute(None, None) {
             Ok(exit_code) => Ok(exit_code),
             Err(err) => Err(err.err_code()),
@@ -31,18 +29,39 @@ impl<'a> Git<'a> {
     }
 
     // git clone
-    pub fn clone(_url: &str) -> i32 {
-        todo!()
+    pub fn clone(url: &str, workload: Option<&str>) -> Result<i32, i32> {
+        let mut git = Git::new("git");
+        git.set_args(vec!["clone", url]);
+        if let Err(err) = git.set_workdir(workload) {
+            return Err(err.err_code());
+        };
+        match git.excute(None, None) {
+            Ok(exit_code) => Ok(exit_code),
+            Err(err) => Err(err.err_code()),
+        }
     }
 
     // git pull
-    pub fn pull() -> i32 {
-        todo!()
+    pub fn pull(workload: Option<&str>) -> Result<i32, i32> {
+        let mut git = Git::new("git");
+        git.set_args(vec!["pull"]);
+        if let Err(err) = git.set_workdir(workload) {
+            return Err(err.err_code());
+        };
+        match git.excute(None, None) {
+            Ok(exit_code) => Ok(exit_code),
+            Err(err) => Err(err.err_code()),
+        }
     }
 
     // git log
-    pub fn log() -> i32 {
-        todo!()
+    pub fn log(stdout: &str, stderr: &str) -> Result<i32, i32> {
+        let mut git = Git::new("git");
+        git.set_args(vec!["log"]);
+        match git.excute(Some(stdout), Some(stderr)) {
+            Ok(exit_code) => Ok(exit_code),
+            Err(err) => Err(err.err_code()),
+        }
     }
 }
 
@@ -170,8 +189,8 @@ impl<'a> Git<'a> {
 
 #[test]
 fn test_to_string() {
-    let mut git = Git::set_exe("git");
-    git.set_args(vec!["clone", "https://github.com/SKTT1Ryze/rust-xs-evaluation"]).unwrap();
+    let mut git = Git::new("git");
+    git.set_args(vec!["clone", "https://github.com/SKTT1Ryze/rust-xs-evaluation"]);
     assert_eq!(git.to_string(), String::from("git clone https://github.com/SKTT1Ryze/rust-xs-evaluation"));
 }
 
@@ -186,9 +205,9 @@ fn test_git_version() {
     }
     let stdout_file = workload.join("git_version_stdout.txt");
     let stderr_file = workload.join("git_version_stderr.txt");
-    let mut git = Git::set_exe("git");
+    let mut git = Git::new("git");
     let args = vec!["--version"];
-    git.set_args(args).unwrap();
+    git.set_args(args);
     git.set_workdir(workload.to_str()).unwrap();
     match git.excute(stdout_file.to_str(), stderr_file.to_str()) {
         Ok(exit_code) => {
@@ -214,9 +233,9 @@ fn test_git_log() {
     }
     let stdout_file = workload.join("git_log_stdout.txt");
     let stderr_file = workload.join("git_log_stderr.txt");
-    let mut git = Git::set_exe("git");
+    let mut git = Git::new("git");
     let args = vec!["log"];
-    git.set_args(args).unwrap();
+    git.set_args(args);
     git.set_workdir(workload.to_str()).unwrap();
     match git.excute(stdout_file.to_str(), stderr_file.to_str()) {
         Ok(exit_code) => {
@@ -242,12 +261,9 @@ fn test_git_status() {
     }
     let stdout_file = workload.join("git_status_stdout.txt");
     let stderr_file = workload.join("git_status_stderr.txt");
-    let mut git = Git::set_exe("git");
+    let mut git = Git::new("git");
     let args = vec!["status", "--help"];
-    match git.set_args(args) {
-        Err(errtype) => panic!("ErrType: {:?}", errtype),
-        Ok(_) => {},
-    }
+    git.set_args(args);
     git.set_workdir(workload.to_str()).unwrap();
     match git.excute(stdout_file.to_str(), stderr_file.to_str()) {
         Ok(exit_code) => {
@@ -278,12 +294,9 @@ fn test_git_clone() {
     if repo_path.exists() {
         fs::remove_dir_all(repo_path).unwrap();
     }
-    let mut git = Git::set_exe("git");
+    let mut git = Git::new("git");
     let args = vec!["clone", repo];
-    match git.set_args(args) {
-        Err(errtype) => panic!("ErrType: {:?}", errtype),
-        Ok(_) => {},
-    }
+    git.set_args(args);
     git.set_workdir(workload.to_str()).unwrap();
     match git.excute(stdout_file.to_str(), stderr_file.to_str()) {
         Ok(exit_code) => {
@@ -322,9 +335,9 @@ fn test_git_pull() {
         .spawn()
         .unwrap();
     git_clone.wait().unwrap();
-    let mut git = Git::set_exe("git");
+    let mut git = Git::new("git");
     let args = vec!["pull"];
-    git.set_args(args).unwrap();
+    git.set_args(args);
     git.set_workdir(workload.to_str()).unwrap();
     match git.excute(stdout_file.to_str(), stderr_file.to_str()) {
         Ok(exit_code) => {
