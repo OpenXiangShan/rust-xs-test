@@ -10,3 +10,4 @@ edition = "2018"
 log = "0.4"
 simple_logger = "1.11.0"
 xscommand-macros = { path = "macros" }
+psutil = "3.2.0"

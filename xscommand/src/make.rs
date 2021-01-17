@@ -7,7 +7,7 @@ use std::{
     process::{Command, Stdio}
 };
 
-use super::{XSCommand, DefaultErr};
+use super::{XSCommand, XSCommandErr, DefaultErr};
 use xscommand_macros::XSCommand;
 
 /// Make XSCommand
@@ -19,8 +19,28 @@ pub struct Make<'a> {
 }
 
 impl<'a> Make<'a> {
-    pub fn emu() -> i32 {
-        todo!()
+    pub fn init(workload: Option<&str>) -> Result<i32, i32> {
+        let mut make = Make::new("make");
+        make.set_args(vec!["init"]);
+        if let Err(err) = make.set_workdir(workload) {
+            return Err(err.err_code());
+        };
+        match make.excute(None, None) {
+            Ok(exit_code) => Ok(exit_code),
+            Err(err) => Err(err.err_code()),
+        }
+    }
+
+    pub fn emu(workload: Option<&str>) -> Result<i32, i32> {
+        let mut make = Make::new("make");
+        make.set_args(vec!["build/emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-all\"", "EMU_THREADS=8", "-j10"]);
+        if let Err(err) = make.set_workdir(workload) {
+            return Err(err.err_code());
+        };
+        match make.excute(None, None) {
+            Ok(exit_code) => Ok(exit_code),
+            Err(err) => Err(err.err_code()),
+        }
     }
 }
 // impl<'a> XSCommand<'a, DefaultErr> for Make<'a> {

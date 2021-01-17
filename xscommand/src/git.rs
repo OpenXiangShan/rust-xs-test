@@ -55,10 +55,10 @@ impl<'a> Git<'a> {
     }
 
     // git log
-    pub fn log(stdout: &str, stderr: &str) -> Result<i32, i32> {
+    pub fn log(stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, i32> {
         let mut git = Git::new("git");
         git.set_args(vec!["log"]);
-        match git.excute(Some(stdout), Some(stderr)) {
+        match git.excute(stdout, stderr) {
             Ok(exit_code) => Ok(exit_code),
             Err(err) => Err(err.err_code()),
         }
