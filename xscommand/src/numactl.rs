@@ -16,3 +16,11 @@ pub struct Numactl<'a> {
     work_dir: Option<&'a str>,
 }
 
+impl<'a> Numactl<'a> {
+    pub fn make_emu() -> i32 {
+        todo!()
+    }
+    pub fn run_emu() -> i32 {
+        todo!()
+    }
+}

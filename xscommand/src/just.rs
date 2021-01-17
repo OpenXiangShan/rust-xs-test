@@ -18,6 +18,11 @@ pub struct Just<'a> {
     work_dir: Option<&'a str>,
 }
 
+impl<'a> Just<'a> {
+    pub fn run() -> i32 {
+        todo!()
+    }
+}
 #[test]
 fn test_to_string() {
     let mut just = Just::set_exe("just");

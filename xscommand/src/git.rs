@@ -1,7 +1,7 @@
 /// Git XSCommand Implementation
 /// 
 
-use super::{XSCommand, DefaultErr};
+use super::{XSCommand, XSCommandErr, DefaultErr};
 use std::{
     fs::File,
     os::unix::io::{FromRawFd, IntoRawFd},
@@ -17,6 +17,34 @@ pub struct Git<'a> {
     work_dir: Option<&'a str>,
 }
 
+impl<'a> Git<'a> {
+    // git version
+    pub fn version() -> Result<i32, i32> {
+        let mut git = Git::set_exe("git");
+        if let Err(err_code) = git.set_args(vec!["version"]) {
+            return Err(err_code.err_code());
+        };
+        match git.excute(None, None) {
+            Ok(exit_code) => Ok(exit_code),
+            Err(err) => Err(err.err_code()),
+        }
+    }
+
+    // git clone
+    pub fn clone(_url: &str) -> i32 {
+        todo!()
+    }
+
+    // git pull
+    pub fn pull() -> i32 {
+        todo!()
+    }
+
+    // git log
+    pub fn log() -> i32 {
+        todo!()
+    }
+}
 
 // impl<'a> XSCommand<'a, DefaultErr> for Git<'a> {
 //     fn new() -> Self {

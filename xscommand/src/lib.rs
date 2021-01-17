@@ -61,10 +61,14 @@ impl XSCommandErr for DefaultErr {
         match self {
             DefaultErr::SetArgsErr => "Default Set Args Error",
             DefaultErr::SetWorkDirErr  => "Default Set workload Error",
-            DefaultErr::ExcuteErr(_) => "Default Excute Err",
+            DefaultErr::ExcuteErr(_) => "Default Excute Error",
         }
     }
     fn err_code(&self) -> i32 {
-        todo!()
+        match self {
+            DefaultErr::SetArgsErr => 1,
+            DefaultErr::SetWorkDirErr => 2,
+            DefaultErr::ExcuteErr(err_code) => *err_code,
+        }
     }
 }

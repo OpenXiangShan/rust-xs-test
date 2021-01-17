@@ -18,6 +18,11 @@ pub struct Make<'a> {
     work_dir: Option<&'a str>,
 }
 
+impl<'a> Make<'a> {
+    pub fn emu() -> i32 {
+        todo!()
+    }
+}
 // impl<'a> XSCommand<'a, DefaultErr> for Make<'a> {
 //     fn new() -> Self {
 //         let make = Command::new("make");

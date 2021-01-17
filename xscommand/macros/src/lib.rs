@@ -63,8 +63,7 @@ pub fn xscommand_derive(input: TokenStream) -> TokenStream {
                             fd.into_raw_fd()
                         },
                         Err(_) => {
-                            // TODO: return ExcuteErr(err_code)
-                            todo!()
+                            return Err(DefaultErr::ExcuteErr(3));
                         }
                     };
                     // let stdout_fd = File::create(stdout_path).unwrap().into_raw_fd();
@@ -77,8 +76,7 @@ pub fn xscommand_derive(input: TokenStream) -> TokenStream {
                             fd.into_raw_fd()
                         },
                         Err(_) => {
-                            // TODO: return ExcuteErr(err_code)
-                            todo!()
+                            return Err(DefaultErr::ExcuteErr(4));
                         }
                     };
                     let err_out = unsafe { Stdio::from_raw_fd(stderr_fd) };
@@ -95,13 +93,11 @@ pub fn xscommand_derive(input: TokenStream) -> TokenStream {
                             log::info!("{} excute with exit code: {}", stringify!(#name).to_ascii_lowercase(), exit_code);
                             Ok(exit_code)
                         } else {
-                            // TODO: return ExcuteErr(err_code)
-                            todo!()
+                            return Err(DefaultErr::ExcuteErr(5));
                         }
                     },
                     Err(_) => {
-                        // TODO: Error Handler or return ExcuteErr(err_code)
-                        todo!();
+                        return Err(DefaultErr::ExcuteErr(6));
                     }
                 }
             }

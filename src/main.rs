@@ -45,7 +45,6 @@ fn main() -> ! {
             continue;
         }
         pool.execute(move || {
-            // TODO: use function to return `time`
             let time = get_workload_name();
             let work_root = Path::new(WORK_ROOT);
             let workload = work_root.join(time);
@@ -143,7 +142,7 @@ fn main() -> ! {
                 let stdout_f = workload.join("stdout.txt");
                 let stderr_f = workload.join("stderr.txt");
                 let mut make = Make::set_exe("numactl");
-                match make.set_args(vec!["-C", "0-63", "make", "emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-all\"", "EMU_THREADS=8", "-j64"]) {
+                match make.set_args(vec!["-C", "0-63", "make", "build/emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-all\"", "EMU_THREADS=8", "-j64"]) {
                     Ok(_) => {}, // do nothing
                     Err(make_err) => {
                         log::error!("{}, thread {} exit", make_err.as_str(), thread_id::get());
