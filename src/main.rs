@@ -61,37 +61,50 @@ fn main() -> ! {
             }
             let repo_url = "https://github.com/RISCVERS/XiangShan.git";
             // git clone XiangShan
-            {
-                let stdout_f = workload.join("stdout.txt");
-                let stderr_f = workload.join("stderr.txt");
-                let mut git = Git::new("git");
-                let args = vec!["clone", repo_url];
-                // use macro to reduce below code lines
-                git.set_args(args);
-                match git.set_workdir(workload.to_str()) {
-                    Ok(_) => {}, // do nothing
-                    Err(git_err) => {
-                        log::error!("{}, thread {} exit.", git_err.as_str(), thread_id::get());
-                        // TODO: specify exit code
+            match Git::clone(repo_url, workload.to_str()) {
+                Ok(exit_code) => {
+                    log::info!("git clone {} exit with {}", repo_url, exit_code);
+                    if exit_code != 0 {
+                        log::error!("exit code not zero, thread {} exit.", thread_id::get());
                         exit(-1);
                     }
+                },
+                Err(err_code) => {
+                    log::error!("git clone {} error with {}, thread {} exit.", repo_url, err_code, thread_id::get());
+                    exit(-1);
                 }
-                match git.excute(stdout_f.to_str(), stderr_f.to_str()) {
-                    Ok(exit_code) => {
-                        log::info!("git with args: {:?} excute return {}", git.get_args(), exit_code);
-                        if exit_code != 0 {
-                            log::error!("exit not zero, thread {} exit.", thread_id::get());
-                            exit(-1);
-                        }
-                    },
-                    Err(git_err) => {
-                        log::error!("{}, thread {} exit.", git_err.as_str(), thread_id::get());
-                        // TODO: specify exit code
-                        exit(-1);
-                    }
-                }
-                // git drop here
             }
+            // {
+            //     let stdout_f = workload.join("stdout.txt");
+            //     let stderr_f = workload.join("stderr.txt");
+            //     let mut git = Git::new("git");
+            //     let args = vec!["clone", repo_url];
+            //     // use macro to reduce below code lines
+            //     git.set_args(args);
+            //     match git.set_workdir(workload.to_str()) {
+            //         Ok(_) => {}, // do nothing
+            //         Err(git_err) => {
+            //             log::error!("{}, thread {} exit.", git_err.as_str(), thread_id::get());
+            //             // TODO: specify exit code
+            //             exit(-1);
+            //         }
+            //     }
+            //     match git.excute(stdout_f.to_str(), stderr_f.to_str()) {
+            //         Ok(exit_code) => {
+            //             log::info!("git with args: {:?} excute return {}", git.get_args(), exit_code);
+            //             if exit_code != 0 {
+            //                 log::error!("exit not zero, thread {} exit.", thread_id::get());
+            //                 exit(-1);
+            //             }
+            //         },
+            //         Err(git_err) => {
+            //             log::error!("{}, thread {} exit.", git_err.as_str(), thread_id::get());
+            //             // TODO: specify exit code
+            //             exit(-1);
+            //         }
+            //     }
+            //     // git drop here
+            // }
             let workload = workload.join(url2path(repo_url));
             // enter XiangShan and make init
             {
