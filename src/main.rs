@@ -8,6 +8,11 @@ extern crate threadpool;
 extern crate thread_id;
 extern crate chrono;
 extern crate psutil;
+extern crate toml;
+extern crate serde;
+extern crate serde_derive;
+
+pub mod config;
 
 #[allow(unused_imports)]
 use std::{
@@ -30,7 +35,7 @@ use xscommand::{
 use threadpool::ThreadPool;
 use chrono::prelude::*;
 
-const WORKERS_NUM: usize = 5;
+const WORKERS_NUM: usize = 3;
 const WORK_ROOT: &str = "/home/ccc/rust_xs_test_workload";
 const SLEEP_TIME: u64 = 120;
 const EMU_TARGET: &str = "/bigdata/zyy/checkpoints_profiles/betapoint_profile_06/gcc_200/0/_8000000000_.gz";
