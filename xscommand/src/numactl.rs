@@ -20,9 +20,12 @@ pub struct Numactl<'a> {
 }
 
 impl<'a> Numactl<'a> {
-    pub fn make_emu(workload: Option<&str>, nemu_home: &str, am_home: &str) -> Result<i32, i32> {
+    pub fn make_emu(workload: Option<&str>, nemu_home: &str, am_home: &str, thread_num: usize) -> Result<i32, i32> {
         let mut numactl = Numactl::new("numactl");
-        numactl.set_args(vec!["-C", "0-255", "make", "build/emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-all\"", "EMU_THREADS=8", "-j256"]);
+        let thread_num = thread_num.to_string();
+        let mut thread_num_arg =  "EMU_THREADS=".to_string();
+        thread_num_arg.push_str(thread_num.as_str());
+        numactl.set_args(vec!["-C", "0-255", "make", "build/emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-all\"", thread_num_arg.as_str(), "-j256"]);
         if let Err(err) = numactl.set_workdir(workload) {
             return Err(err.err_code());
         };

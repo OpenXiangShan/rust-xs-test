@@ -1,0 +1,10 @@
+[hook]
+workers_num = 1
+work_root = "/home/ccc/rust_xs_test_workload"
+sleep_time = 120
+
+[emu]
+img = "/bigdata/zyy/checkpoints_profiles/betapoint_profile_06/gcc_200/0/_8000000000_.gz"
+thread_num = 8
+nemu_home = "/home/ccc/NEMU"
+am_home = "/home/ccc/nexus-am"

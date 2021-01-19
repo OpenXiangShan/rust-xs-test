@@ -6,8 +6,8 @@ use std::path::Path;
 /// Global Config
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    hook_config: Option<HookConfig>,
-    emu_config: Option<EmuConfig>,
+    hook: Option<HookConfig>,
+    emu: Option<EmuConfig>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -34,7 +34,7 @@ impl Config {
     }
 
     pub fn workers_num(&self) -> Option<usize> {
-        if let Some(config) = &self.hook_config {
+        if let Some(config) = &self.hook {
             config.workers_num
         } else {
             None
@@ -42,7 +42,7 @@ impl Config {
     }
 
     pub fn work_root(&self) -> Option<&str> {
-        if let Some(config) = &self.hook_config {
+        if let Some(config) = &self.hook {
             if let Some(string) = &config.work_root {
                 Some(string.as_str())
             } else {
@@ -54,7 +54,7 @@ impl Config {
     }
 
     pub fn sleep_time(&self) -> Option<u64> {
-        if let Some(config) = &self.hook_config {
+        if let Some(config) = &self.hook {
             config.sleep_time
         } else {
             None
@@ -62,7 +62,7 @@ impl Config {
     }
 
     pub fn img(&self) -> Option<&str> {
-        if let Some(config) = &self.emu_config {
+        if let Some(config) = &self.emu {
             if let Some(string) = &config.img {
                 Some(string.as_str())
             } else {
@@ -74,7 +74,7 @@ impl Config {
     }
     
     pub fn thread_num(&self) -> Option<usize> {
-        if let Some(config) = &self.emu_config {
+        if let Some(config) = &self.emu {
             config.thread_num
         } else {
             None
@@ -82,7 +82,7 @@ impl Config {
     }
 
     pub fn nemu_home(&self) -> Option<&str> {
-        if let Some(config) = &self.emu_config {
+        if let Some(config) = &self.emu {
             if let Some(string) = &config.nemu_home {
                 Some(string.as_str())
             } else {
@@ -94,7 +94,7 @@ impl Config {
     }
 
     pub fn am_home(&self) -> Option<&str> {
-        if let Some(config) = &self.emu_config {
+        if let Some(config) = &self.emu {
             if let Some(string) = &config.am_home {
                 Some(string.as_str())
             } else {

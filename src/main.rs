@@ -21,7 +21,9 @@ use std::{
     thread, time::Duration,
     vec,
     io::{prelude::*, BufWriter},
+    sync::Arc,
 };
+use config::Config;
 use simple_logger::SimpleLogger;
 #[allow(unused_imports)]
 use xscommand::{
@@ -38,7 +40,8 @@ use chrono::prelude::*;
 const WORKERS_NUM: usize = 3;
 const WORK_ROOT: &str = "/home/ccc/rust_xs_test_workload";
 const SLEEP_TIME: u64 = 120;
-const EMU_TARGET: &str = "/bigdata/zyy/checkpoints_profiles/betapoint_profile_06/gcc_200/0/_8000000000_.gz";
+const IMG: &str = "/bigdata/zyy/checkpoints_profiles/betapoint_profile_06/gcc_200/0/_8000000000_.gz";
+const THREAD_NUM: usize = 8;
 const NEMU_HOME: &str = "/home/ccc/NEMU";
 const AM_HOME: &str = "/home/ccc/nexus-am";
 
@@ -47,17 +50,23 @@ fn main() -> ! {
     // init simple logger
     let logger = SimpleLogger::new();
     logger.init().unwrap();
+    let f = fs::read_to_string("config.toml").unwrap();
+    let config: Config = toml::from_str(f.as_str()).unwrap();
+    let config = Arc::new(config);
+    let workers_num = if let Some(num) = config.workers_num() { num } else { WORKERS_NUM };
+    let sleep_time = if let Some(time) = config.sleep_time() { time } else { SLEEP_TIME };
     // create a thread pool
-    let pool = ThreadPool::new(WORKERS_NUM);
-
+    let pool = ThreadPool::new(workers_num);
     loop {
-        if pool.active_count() >= WORKERS_NUM {
-            thread::sleep(Duration::from_secs(SLEEP_TIME));
+        if pool.active_count() >= workers_num {
+            thread::sleep(Duration::from_secs(sleep_time));
             continue;
         }
+        let config = Arc::clone(&config);
         pool.execute(move || {
             let time = get_workload_name();
-            let work_root = Path::new(WORK_ROOT);
+            let work_root = if let Some(dir) =  config.work_root() { dir } else { WORK_ROOT };
+            let work_root = Path::new(work_root);
             let workload = work_root.join(time);
             if !workload.exists() {
                 match fs::create_dir_all(workload.as_path()) {
@@ -144,8 +153,11 @@ fn main() -> ! {
                     }
                 }
             }
-            // numatcl -C 0-255 make build/emu EMU_TRACE=1 SIM_ARGS="--disable-all" EMU_THREADS=8 -j256
-            match Numactl::make_emu(workload.to_str(), NEMU_HOME, AM_HOME) {
+            // numatcl -C 0-255 make build/emu EMU_TRACE=1 SIM_ARGS="--disable-all" EMU_THREADS=thread_num -j256
+            let thread_num = if let Some(num) = config.thread_num() { num } else { THREAD_NUM };
+            let nemu_home = if let Some(path) = config.nemu_home() { path } else { NEMU_HOME };
+            let am_home = if let Some(path) = config.am_home() { path } else { AM_HOME };
+            match Numactl::make_emu(workload.to_str(), nemu_home, am_home, thread_num) {
                 Ok(exit_code) => {
                     log::info!("make emu in {:?} exit with {}", workload, exit_code);
                     if exit_code != 0 {
@@ -182,15 +194,17 @@ fn main() -> ! {
                 log::error!("no path in emu_path, thread {} exit", thread_id::get());
                 exit(-1);
             };
+            let img = if let Some(path) = config.img() { path } else { IMG };
             match Numactl::run_emu(
                 workload.to_str(),
                 stdout_f.to_str(),
                 stderr_f.to_str(),
                 emu,
-                EMU_TARGET,
-                NEMU_HOME,
-                AM_HOME,
-                8) {
+                img,
+                nemu_home,
+                am_home,
+                thread_num
+            ) {
                     Ok(exit_code) => {
                         log::info!("run emu in {:?} exit with {}", workload, exit_code);
                         if exit_code != 0 {
@@ -206,8 +220,8 @@ fn main() -> ! {
             log::info!("thread {} return 0", thread_id::get());
             
         });
-        thread::sleep(Duration::from_secs(SLEEP_TIME));
-        assert!(pool.active_count() <= WORKERS_NUM);
+        thread::sleep(Duration::from_secs(sleep_time));
+        assert!(pool.active_count() <= workers_num);
     }
 
 }
@@ -243,4 +257,17 @@ fn url2path(url: &str) -> &str {
 #[test]
 fn test_url2path() {
     assert_eq!(url2path("https://github.com/RISCVERS/XiangShan.git"), "XiangShan");
+}
+
+#[test]
+fn test_read_config() {
+    let toml_f = fs::read_to_string("config.toml").unwrap();
+    let conf: Config = toml::from_str(toml_f.as_str()).unwrap();
+    assert_eq!(conf.workers_num(), Some(1));
+    assert_eq!(conf.work_root(), Some("/home/ccc/rust_xs_test_workload"));
+    assert_eq!(conf.sleep_time(), Some(120));
+    assert_eq!(conf.img(), Some("/bigdata/zyy/checkpoints_profiles/betapoint_profile_06/gcc_200/0/_8000000000_.gz"));
+    assert_eq!(conf.thread_num(), Some(8));
+    assert_eq!(conf.nemu_home(), Some("/home/ccc/NEMU"));
+    assert_eq!(conf.am_home(), Some("/home/ccc/nexus-am"));
 }
