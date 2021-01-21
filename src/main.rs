@@ -1,6 +1,6 @@
-/// Auto Background Test Routine for XiangShan Processor
-/// XiangShan: https://github.com/RISCVERS/XiangShan
-/// Never panic
+//! Auto Background Test Routine for XiangShan Processor
+//! XiangShan: https://github.com/RISCVERS/XiangShan
+//! Never panic
 
 extern crate xscommand;
 extern crate simple_logger;
@@ -12,8 +12,8 @@ extern crate toml;
 extern crate serde;
 extern crate serde_derive;
 
-pub mod config;
-
+mod config;
+mod tasks;
 #[allow(unused_imports)]
 use std::{
     fs,
@@ -40,7 +40,7 @@ use chrono::prelude::*;
 const WORKERS_NUM: usize = 3;
 const WORK_ROOT: &str = "/home/ccc/rust_xs_test_workload";
 const SLEEP_TIME: u64 = 120;
-const IMG: &str = "/bigdata/zyy/checkpoints_profiles/betapoint_profile_06/gcc_200/0/_8000000000_.gz";
+const IMG_LIST: &str = "/bigdata/zyy/checkpoints_profiles/betapoint_profile_06/";
 const THREAD_NUM: usize = 8;
 const NEMU_HOME: &str = "/home/ccc/NEMU";
 const AM_HOME: &str = "/home/ccc/nexus-am";
@@ -214,7 +214,11 @@ fn main() -> ! {
                 log::error!("no path in emu_path, thread {} exit", thread_id::get());
                 exit(-1);
             };
-            let img = if let Some(path) = config.img() { path } else { IMG };
+            let img_list = if let Some(dir) = config.img_list() { dir } else { IMG_LIST };
+            let tasks = tasks::tasks_list(img_list);
+            use rand::Rng;
+            let mut task_id = rand::thread_rng();
+            let img = tasks[task_id.gen_range(0..tasks.len())].as_str();
             match Numactl::run_emu(
                 xs_home.to_str(),
                 stdout_f.to_str(),
@@ -286,7 +290,7 @@ fn test_read_config() {
     assert_eq!(conf.workers_num(), Some(1));
     assert_eq!(conf.work_root(), Some("/home/ccc/rust_xs_test_workload"));
     assert_eq!(conf.sleep_time(), Some(120));
-    assert_eq!(conf.img(), Some("/bigdata/zyy/checkpoints_profiles/betapoint_profile_06/gcc_200/0/_8000000000_.gz"));
+    assert_eq!(conf.img_list(), Some("/bigdata/zyy/checkpoints_profiles/betapoint_profile_06"));
     assert_eq!(conf.thread_num(), Some(8));
     assert_eq!(conf.nemu_home(), Some("/home/ccc/NEMU"));
     assert_eq!(conf.am_home(), Some("/home/ccc/nexus-am"));

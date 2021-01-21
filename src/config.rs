@@ -19,16 +19,16 @@ pub struct HookConfig {
 
 #[derive(Debug, Deserialize)]
 pub struct EmuConfig {
-    img: Option<String>,
     thread_num: Option<usize>,
     noop_home: Option<String>,
     nemu_home: Option<String>,
     am_home: Option<String>,
+    img_list: Option<String>,
 }
 
 
 impl Config {
-    pub fn new<P: AsRef<Path>>(f: P) -> Self {
+    pub fn _new<P: AsRef<Path>>(f: P) -> Self {
         let toml_f = fs::read_to_string(f).unwrap();
         let config: Config = toml::from_str(toml_f.as_str()).unwrap();
         config
@@ -62,9 +62,9 @@ impl Config {
         }
     }
 
-    pub fn img(&self) -> Option<&str> {
+    pub fn img_list(&self) -> Option<&str> {
         if let Some(config) = &self.emu {
-            if let Some(string) = &config.img {
+            if let Some(string) = &config.img_list {
                 Some(string.as_str())
             } else {
                 None
