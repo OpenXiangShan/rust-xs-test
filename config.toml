@@ -4,7 +4,7 @@
 workers_num = 1
 # 工作根目录
 work_root = "/home/ccc/rust_xs_test_workload"
-# 内部每次循环线程休眠时间
+# 内部每次循环线程休眠时间，单位为秒
 sleep_time = 120
 
 [emu]
