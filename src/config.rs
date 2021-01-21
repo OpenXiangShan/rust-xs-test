@@ -21,6 +21,7 @@ pub struct HookConfig {
 pub struct EmuConfig {
     img: Option<String>,
     thread_num: Option<usize>,
+    noop_home: Option<String>,
     nemu_home: Option<String>,
     am_home: Option<String>,
 }
@@ -76,6 +77,18 @@ impl Config {
     pub fn thread_num(&self) -> Option<usize> {
         if let Some(config) = &self.emu {
             config.thread_num
+        } else {
+            None
+        }
+    }
+
+    pub fn noop_home(&self) -> Option<&str> {
+        if let Some(config) = &self.emu {
+            if let Some(string) = &config.noop_home {
+                Some(string.as_str())
+            } else {
+                None
+            }
         } else {
             None
         }

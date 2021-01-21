@@ -79,38 +79,58 @@ fn main() -> ! {
                     },
                 }
             }
-            let repo_url = "https://github.com/RISCVERS/XiangShan.git";
-            // git clone XiangShan
-            match Git::clone(repo_url, workload.to_str()) {
+            let xs_home;
+            if let Some(noop_home) = config.noop_home() {
+                // use existing XiangShan proj
+                xs_home = workload.join(noop_home);
+            } else {
+                let repo_url = "https://github.com/RISCVERS/XiangShan.git";
+                // git clone XiangShan
+                match Git::clone(repo_url, workload.to_str()) {
+                    Ok(exit_code) => {
+                        log::info!("git clone {} exit with {}", repo_url, exit_code);
+                        if exit_code != 0 {
+                            log::error!("exit code not zero, thread {} exit.", thread_id::get());
+                            exit(-1);
+                        }
+                    },
+                    Err(err_code) => {
+                        log::error!("git clone {} error with {}, thread {} exit.", repo_url, err_code, thread_id::get());
+                        exit(-1);
+                    }
+                }
+                xs_home = workload.join(url2path(repo_url));
+            }
+            // enter XiangShan and make init
+            match Make::init(xs_home.to_str()) {
                 Ok(exit_code) => {
-                    log::info!("git clone {} exit with {}", repo_url, exit_code);
+                    log::info!("make init in {:?} exit with {}", xs_home, exit_code);
                     if exit_code != 0 {
                         log::error!("exit code not zero, thread {} exit.", thread_id::get());
                         exit(-1);
                     }
                 },
                 Err(err_code) => {
-                    log::error!("git clone {} error with {}, thread {} exit.", repo_url, err_code, thread_id::get());
+                    log::error!("make init in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
                     exit(-1);
                 }
             }
-            let workload = workload.join(url2path(repo_url));
-            // enter XiangShan and make init
-            match Make::init(workload.to_str()) {
+            // if use existing XiangShan proj, git pull
+            match Git::pull(xs_home.to_str()) {
                 Ok(exit_code) => {
-                    log::info!("make init in {:?} exit with {}", workload, exit_code);
+                    log::info!("git pull in {:?} exit with {}", xs_home, exit_code);
                     if exit_code != 0 {
                         log::error!("exit code not zero, thread {} exit.", thread_id::get());
                         exit(-1);
                     }
                 },
                 Err(err_code) => {
-                    log::error!("make init in {:?} error with {}, thread {} exit.", workload, err_code, thread_id::get());
+                    log::error!("git pull in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
                     exit(-1);
                 }
             }
             // change the ram size
-            let ram_h = workload.join("src/test/csrc/ram.h");
+            let ram_h = xs_home.join("src/test/csrc/ram.h");
             let ram_h_contents = match fs::read_to_string(&ram_h) {
                 Ok(content) => content,
                 Err(_) => {
@@ -157,22 +177,22 @@ fn main() -> ! {
             let thread_num = if let Some(num) = config.thread_num() { num } else { THREAD_NUM };
             let nemu_home = if let Some(path) = config.nemu_home() { path } else { NEMU_HOME };
             let am_home = if let Some(path) = config.am_home() { path } else { AM_HOME };
-            match Numactl::make_emu(workload.to_str(), nemu_home, am_home, thread_num) {
+            match Numactl::make_emu(xs_home.to_str(), nemu_home, am_home, thread_num) {
                 Ok(exit_code) => {
-                    log::info!("make emu in {:?} exit with {}", workload, exit_code);
+                    log::info!("make emu in {:?} exit with {}", xs_home, exit_code);
                     if exit_code != 0 {
                         log::error!("exit code not zero, thread {} exit.", thread_id::get());
                         exit(-1);
                     }
                 },
                 Err(err_code) => {
-                    log::error!("make emu in {:?} error with {}, thread {} exit.", workload, err_code, thread_id::get());
+                    log::error!("make emu in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
                     exit(-1);
                 }
             }
-            // create ../emu_res dir && 
+            // create ./emu_res dir && 
             // numactl -C [] emu -I 1000000 -i /bigdata/zyy/checkpoints_profiles/betapoint_profile_06/gcc_200/0/_8000000000_.gz
-            let res_dir = workload.join("../emu_res");
+            let res_dir = workload.join("./emu_res");
             if !res_dir.exists() {
                 match fs::create_dir_all(res_dir.as_path()) {
                     Ok(_) => {}, // do nothing
@@ -186,7 +206,7 @@ fn main() -> ! {
             }
             let stdout_f = res_dir.join("stdout.txt");
             let stderr_f = res_dir.join("stderr.txt");
-            let emu_path = workload.join("./build/emu");
+            let emu_path = xs_home.join("./build/emu");
             let emu = if let Some(path) = emu_path.to_str() {
                 log::info!("create emu in {}", path);
                 path
@@ -196,7 +216,7 @@ fn main() -> ! {
             };
             let img = if let Some(path) = config.img() { path } else { IMG };
             match Numactl::run_emu(
-                workload.to_str(),
+                xs_home.to_str(),
                 stdout_f.to_str(),
                 stderr_f.to_str(),
                 emu,
@@ -206,14 +226,14 @@ fn main() -> ! {
                 thread_num
             ) {
                     Ok(exit_code) => {
-                        log::info!("run emu in {:?} exit with {}", workload, exit_code);
+                        log::info!("run emu in {:?} exit with {}", xs_home, exit_code);
                         if exit_code != 0 {
                             log::error!("exit code not zero, thread {} exit.", thread_id::get());
                             exit(-1);
                         }
                     },
                     Err(err_code) => {
-                        log::error!("run emu in {:?} error with {}, thread {} exit.", workload, err_code, thread_id::get());
+                        log::error!("run emu in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
                         exit(-1);
                     }
                 }
