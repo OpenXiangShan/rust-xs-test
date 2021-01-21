@@ -8,7 +8,7 @@ pub fn tasks_list<P: AsRef<Path>>(dir: P) -> Vec<String> {
     for entry in WalkDir::new(dir) {
         let entry = entry.unwrap();
         if entry.file_name().to_str().map(|s| s.ends_with(".gz")).unwrap_or(false) {
-            if let Some(str) = entry.file_name().to_str() {
+            if let Some(str) = entry.into_path().to_str() {
                 tasks.push(String::from(str));
             }
         }
