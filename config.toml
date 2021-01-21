@@ -12,7 +12,7 @@ sleep_time = 120
 thread_num = 8
 # 仿真最大指令数
 max_instr = 1000000
-# 香山目录，可选。如果不指定的话会自动从 github 上 clone 最新的香山源码
+# 香山目录，可选。如果不指定的话会自动从 github 上 clone 最新的香山源码到工作目录
 noop_home = "/home/ccc/XiangShan"
 # NEMU 目录，可选。默认为 /home/ccc/NEMU
 nemu_home = "/home/ccc/NEMU"
