@@ -1,12 +1,22 @@
+# 多线程测试后台程序
 [hook]
+# 测试线程数，目前建议设为 1
 workers_num = 1
+# 工作根目录
 work_root = "/home/ccc/rust_xs_test_workload"
+# 内部每次循环线程休眠时间
 sleep_time = 120
 
 [emu]
+# emu 编译线程数
 thread_num = 8
+# 仿真最大指令数
 max_instr = 1000000
+# 香山目录，可选。如果不指定的话会自动从 github 上 clone 最新的香山源码
 noop_home = "/home/ccc/XiangShan"
+# NEMU 目录，可选。默认为 /home/ccc/NEMU
 nemu_home = "/home/ccc/NEMU"
+# AM 目录，可选。默认为 /home/ccc/nexus-am
 am_home = "/home/ccc/nexus-am"
+# 测试列表目录，可选。默认为 /bigdata/zyy/checkpoints_profiles/betapoint_profile_06
 img_list = "/bigdata/zyy/checkpoints_profiles/betapoint_profile_06"

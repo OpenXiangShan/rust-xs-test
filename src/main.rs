@@ -285,7 +285,8 @@ fn main() -> ! {
             ) {
                     Ok(exit_code) => {
                         log::info!("run emu in {:?} exit with {}", xs_home, exit_code);
-                        if exit_code != 0 {
+                        if exit_code != 0 && exit_code != 3 {
+                            // TODO: go back 10000 cycleCnt and dump waves 
                             log::error!("exit code not zero, thread {} exit.", thread_id::get());
                             return;
                         }
@@ -295,6 +296,11 @@ fn main() -> ! {
                         return;
                     }
                 }
+            // everything seems to be going well, delete the workload
+            match fs::remove_dir_all(workload) {
+                Ok(_) => log::info!("successed in removing workload."),
+                Err(e) => log::error!("{:?} occur when removing the workload, but go on", e),
+            }
             log::info!("thread {} return 0", thread_id::get());
             
         });

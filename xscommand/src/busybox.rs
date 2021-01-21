@@ -30,7 +30,7 @@ impl<'a> BusyBox<'a> {
         }
     }
 
-    // mv
+    // MV
     pub fn mv(source: &str, destination: &str, workload: Option<&str>) -> Result<i32, i32> {
         let mut mv = BusyBox::new("mv");
         mv.set_args(vec![source, destination]);
