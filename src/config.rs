@@ -20,6 +20,7 @@ pub struct HookConfig {
 #[derive(Debug, Deserialize)]
 pub struct EmuConfig {
     thread_num: Option<usize>,
+    max_instr: Option<usize>,
     noop_home: Option<String>,
     nemu_home: Option<String>,
     am_home: Option<String>,
@@ -74,6 +75,14 @@ impl Config {
         }
     }
     
+    pub fn max_instr(&self) -> Option<usize> {
+        if let Some(config) = &self.emu {
+            config.max_instr
+        } else {
+            None
+        }
+    }
+
     pub fn thread_num(&self) -> Option<usize> {
         if let Some(config) = &self.emu {
             config.thread_num

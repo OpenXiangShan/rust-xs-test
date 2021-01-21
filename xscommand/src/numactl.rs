@@ -44,7 +44,8 @@ impl<'a> Numactl<'a> {
         img_path: &str,
         nemu_home: &str,
         am_home: &str,
-        thread_num: usize) -> Result<i32, i32> {
+        thread_num: usize,
+        max_instr: usize) -> Result<i32, i32> {
         let mut numactl = Numactl::new("numactl");
         let mut cpu_percent_collector = match psutil::cpu::CpuPercentCollector::new() {
             Ok(collector) => collector,
@@ -98,7 +99,8 @@ impl<'a> Numactl<'a> {
         cpu_ids.push_str("-");
         cpu_ids.push_str(end.to_string().as_str());
         log::info!("avaiable cpus: {}", cpu_ids);
-        numactl.set_args(vec!["-C", cpu_ids.as_str(), emu_path, "-I", "1000000", "-i", img_path]);
+        let max_instr = max_instr.to_string();
+        numactl.set_args(vec!["-C", cpu_ids.as_str(), emu_path, "-I", max_instr.as_str(), "-i", img_path]);
         if let Err(err) = numactl.set_workdir(workload) {
             return Err(err.err_code());
         };

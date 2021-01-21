@@ -44,6 +44,7 @@ const IMG_LIST: &str = "/bigdata/zyy/checkpoints_profiles/betapoint_profile_06/"
 const THREAD_NUM: usize = 8;
 const NEMU_HOME: &str = "/home/ccc/NEMU";
 const AM_HOME: &str = "/home/ccc/nexus-am";
+const MAX_INSTR: usize = 1000000;
 
 fn main() -> ! {
     println!("Hello, rust-xs-test!");
@@ -63,7 +64,7 @@ fn main() -> ! {
             continue;
         }
         let config = Arc::clone(&config);
-        pool.execute(move || {
+        pool.execute(move || { // TODO: return code when thread exit
             let time = get_workload_name();
             let work_root = if let Some(dir) =  config.work_root() { dir } else { WORK_ROOT };
             let work_root = Path::new(work_root);
@@ -75,7 +76,7 @@ fn main() -> ! {
                         log::error!("Failed in creating workload {:?} with msg
                         {} , thread {} exit.", workload, msg, thread_id::get());
                         // TODO: specify exit code
-                        exit(-1);
+                        return;
                     },
                 }
             }
@@ -91,12 +92,12 @@ fn main() -> ! {
                         log::info!("git clone {} exit with {}", repo_url, exit_code);
                         if exit_code != 0 {
                             log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                            exit(-1);
+                            return;
                         }
                     },
                     Err(err_code) => {
                         log::error!("git clone {} error with {}, thread {} exit.", repo_url, err_code, thread_id::get());
-                        exit(-1);
+                        return;
                     }
                 }
                 xs_home = workload.join(url2path(repo_url));
@@ -107,12 +108,12 @@ fn main() -> ! {
                     log::info!("make init in {:?} exit with {}", xs_home, exit_code);
                     if exit_code != 0 {
                         log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                        exit(-1);
+                        return;
                     }
                 },
                 Err(err_code) => {
                     log::error!("make init in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
-                    exit(-1);
+                    return;
                 }
             }
             // if use existing XiangShan proj, git pull
@@ -121,12 +122,12 @@ fn main() -> ! {
                     log::info!("git pull in {:?} exit with {}", xs_home, exit_code);
                     if exit_code != 0 {
                         log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                        exit(-1);
+                        return;
                     }
                 },
                 Err(err_code) => {
                     log::error!("git pull in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
-                    exit(-1);
+                    return;
                 }
             }
             // change the ram size
@@ -135,7 +136,7 @@ fn main() -> ! {
                 Ok(content) => content,
                 Err(_) => {
                     log::error!("failed to read ram.h, thread {} exit.", thread_id::get());
-                    exit(-1);
+                    return;
                 }
             };
             let new_contents: Vec<&str> = ram_h_contents.lines().map(|f| {
@@ -152,7 +153,7 @@ fn main() -> ! {
                     Ok(ram_f) => ram_f,
                     Err(_) => {
                         log::error!("failed to open ram.h, thread {} exit", thread_id::get());
-                        exit(-1);
+                        return;
                     }
                 };
                 let mut buf_writer = BufWriter::new(f);
@@ -161,14 +162,14 @@ fn main() -> ! {
                         Ok(_) => {},
                         Err(_) => {
                             log::error!("BufWriter write line error, thread {} exit.", thread_id::get());
-                            exit(-1);
+                            return;
                         }
                     }
                     match buf_writer.write(b"\n") {
                         Ok(_) => {},
                         Err(_) => {
                             log::error!("BufWriter write \\n error, thread {} exit.", thread_id::get());
-                            exit(-1);
+                            return;
                         }
                     }
                 }
@@ -182,12 +183,12 @@ fn main() -> ! {
                     log::info!("make emu in {:?} exit with {}", xs_home, exit_code);
                     if exit_code != 0 {
                         log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                        exit(-1);
+                        return;
                     }
                 },
                 Err(err_code) => {
                     log::error!("make emu in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
-                    exit(-1);
+                    return;
                 }
             }
             // create ./emu_res dir && 
@@ -200,7 +201,7 @@ fn main() -> ! {
                         log::error!("Failed in creating res_dir {:?} with msg
                         {} , thread {} exit.", res_dir, msg, thread_id::get());
                         // TODO: specify exit code
-                        exit(-1);
+                        return;
                     },
                 }
             }
@@ -212,13 +213,14 @@ fn main() -> ! {
                 path
             } else {
                 log::error!("no path in emu_path, thread {} exit", thread_id::get());
-                exit(-1);
+                return;
             };
             let img_list = if let Some(dir) = config.img_list() { dir } else { IMG_LIST };
             let tasks = tasks::tasks_list(img_list);
             use rand::Rng;
             let mut task_id = rand::thread_rng();
             let img = tasks[task_id.gen_range(0..tasks.len())].as_str();
+            let max_instr = if let Some(max) = config.max_instr() { max } else { MAX_INSTR };
             match Numactl::run_emu(
                 xs_home.to_str(),
                 stdout_f.to_str(),
@@ -227,18 +229,19 @@ fn main() -> ! {
                 img,
                 nemu_home,
                 am_home,
-                thread_num
+                thread_num,
+                max_instr
             ) {
                     Ok(exit_code) => {
                         log::info!("run emu in {:?} exit with {}", xs_home, exit_code);
                         if exit_code != 0 {
                             log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                            exit(-1);
+                            return;
                         }
                     },
                     Err(err_code) => {
                         log::error!("run emu in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
-                        exit(-1);
+                        return;
                     }
                 }
             log::info!("thread {} return 0", thread_id::get());
@@ -292,6 +295,7 @@ fn test_read_config() {
     assert_eq!(conf.sleep_time(), Some(120));
     assert_eq!(conf.img_list(), Some("/bigdata/zyy/checkpoints_profiles/betapoint_profile_06"));
     assert_eq!(conf.thread_num(), Some(8));
+    assert_eq!(conf.max_instr(), Some(1000000));
     assert_eq!(conf.nemu_home(), Some("/home/ccc/NEMU"));
     assert_eq!(conf.am_home(), Some("/home/ccc/nexus-am"));
 }

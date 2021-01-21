@@ -5,6 +5,7 @@ sleep_time = 120
 
 [emu]
 thread_num = 8
+max_instr = 1000000
 noop_home = "/home/ccc/XiangShan"
 nemu_home = "/home/ccc/NEMU"
 am_home = "/home/ccc/nexus-am"
