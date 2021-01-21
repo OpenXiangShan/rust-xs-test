@@ -1,11 +1,11 @@
-/// Numactl XSCommand Implementation
-/// 
+//! Numactl XSCommand Implementation
+//! 
 extern crate psutil;
 
 use super::{XSCommand, XSCommandErr, DefaultErr};
 use std::{fs::File,
     os::unix::io::{FromRawFd, IntoRawFd},
-    process::{Command, Stdio, exit},
+    process::{Command, Stdio},
     thread,
     time::Duration,
     vec,
@@ -25,7 +25,7 @@ impl<'a> Numactl<'a> {
         let thread_num = thread_num.to_string();
         let mut thread_num_arg =  "EMU_THREADS=".to_string();
         thread_num_arg.push_str(thread_num.as_str());
-        numactl.set_args(vec!["-C", "0-255", "make", "build/emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-all\"", thread_num_arg.as_str(), "-j256"]);
+        numactl.set_args(vec!["-C", "0-255", "make", "build/emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-log\"", thread_num_arg.as_str(), "-j256"]);
         if let Err(err) = numactl.set_workdir(workload) {
             return Err(err.err_code());
         };
@@ -53,7 +53,7 @@ impl<'a> Numactl<'a> {
                 // TODO: specify exit code
                 let exit_code = -1;
                 log::error!("new CpuPercentCollector error, exit with {}", exit_code);
-                exit(exit_code);
+                return Err(exit_code);
             }
         };
         let cpu_percents = match cpu_percent_collector.cpu_percent_percpu() {
@@ -62,7 +62,7 @@ impl<'a> Numactl<'a> {
                 // TODO: specify exit code
                 let exit_code = -1;
                 log::error!("get cpu_percent_percpu error, exit with {}.", exit_code);
-                exit(exit_code);
+                return Err(exit_code);
             }
         };
         let (mut begin, mut end) = (0, 0);
@@ -83,7 +83,7 @@ impl<'a> Numactl<'a> {
                 }
             }
             if (end - begin) >= (thread_num - 1) {
-                log::info!("found avaiable 8 cpus, ready to run emu.");
+                log::info!("found avaiable {} cpus, ready to run emu.", thread_num);
                 break;
             }
             count += 1;
@@ -93,7 +93,7 @@ impl<'a> Numactl<'a> {
             // TODO: specify exit code
             let exit_code = -1;
             log::error!("no {} cpus avaiable, exit with {}.", thread_num, exit_code);
-            exit(exit_code);
+            return Err(-1);
         }
         let mut cpu_ids = begin.to_string();
         cpu_ids.push_str("-");
@@ -110,7 +110,7 @@ impl<'a> Numactl<'a> {
             // TODO: specify exit code
             let exit_code = -1;
             log::error!("workload.to_str() return None, exit with {}.", exit_code);
-            exit(exit_code);
+            return Err(exit_code);
         }
         numactl.exe.env("NEMU_HOME", nemu_home);
         numactl.exe.env("AM_HOME", am_home);

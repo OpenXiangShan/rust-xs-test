@@ -19,6 +19,7 @@ pub mod make;
 pub mod just;
 pub mod emu;
 pub mod numactl;
+pub mod busybox;
 
 extern crate xscommand_macros;
 

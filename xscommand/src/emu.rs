@@ -1,5 +1,5 @@
-/// Emu XSCommand Implementation
-/// 
+//! Emu XSCommand Implementation
+//! 
 
 use super::{XSCommand, DefaultErr};
 use std::{

@@ -33,6 +33,7 @@ use xscommand::{
     make::Make,
     emu::Emu,
     numactl::Numactl,
+    busybox::BusyBox,
 };
 use threadpool::ThreadPool;
 use chrono::prelude::*;
@@ -174,7 +175,7 @@ fn main() -> ! {
                     }
                 }
             }
-            // numatcl -C 0-255 make build/emu EMU_TRACE=1 SIM_ARGS="--disable-all" EMU_THREADS=thread_num -j256
+            // numatcl -C 0-255 make build/emu EMU_TRACE=1 SIM_ARGS="--disable-log" EMU_THREADS=thread_num -j256
             let thread_num = if let Some(num) = config.thread_num() { num } else { THREAD_NUM };
             let nemu_home = if let Some(path) = config.nemu_home() { path } else { NEMU_HOME };
             let am_home = if let Some(path) = config.am_home() { path } else { AM_HOME };
@@ -192,7 +193,6 @@ fn main() -> ! {
                 }
             }
             // create ./emu_res dir && 
-            // numactl -C [] emu -I 1000000 -i /bigdata/zyy/checkpoints_profiles/betapoint_profile_06/gcc_200/0/_8000000000_.gz
             let res_dir = workload.join("./emu_res");
             if !res_dir.exists() {
                 match fs::create_dir_all(res_dir.as_path()) {
@@ -215,6 +215,57 @@ fn main() -> ! {
                 log::error!("no path in emu_path, thread {} exit", thread_id::get());
                 return;
             };
+            // git log > workload/git_log.txt
+            let git_log_f = workload.join("git_log.txt");
+            match Git::log(git_log_f.to_str(), None, xs_home.to_str()) {
+                Ok(exit_code) => {
+                    log::info!("git log in {:?} exit with {}", xs_home, exit_code);
+                    if exit_code != 0 {
+                        log::error!("exit code not zero, thread {} exit.", thread_id::get());
+                        return;
+                    }
+                },
+                Err(err_code) => {
+                    log::error!("git log in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
+                    return;
+                }
+            }
+            // cp XSSimTop.v && emu workload/
+            let src_v = xs_home.join("build/XSSimTop.v");
+            if let Some(dir) = workload.to_str() {
+                if let Some(v) = src_v.to_str() {
+                    match BusyBox::cp(v, dir, workload.to_str()) {
+                        Ok(exit_code) => {
+                            log::info!("busybox cp in {:?} exit with {}", workload, exit_code);
+                            if exit_code != 0 {
+                                log::error!("exit code not zero, thread {} exit.", thread_id::get());
+                                return;
+                            }
+                        },
+                        Err(err_code) => {
+                            log::error!("busybox cp in {:?} error with {}, thread {} exit.", workload, err_code, thread_id::get());
+                            return;
+                        }
+                    }
+                } else {
+                    log::error!("no XSSimTop.v in {:?}/build, thread {} exit.", xs_home, thread_id::get());
+                    return;
+                }
+                match BusyBox::cp(emu, dir, workload.to_str()) {
+                    Ok(exit_code) => {
+                        log::info!("busybox cp in {:?} exit with {}", workload, exit_code);
+                        if exit_code != 0 {
+                            log::error!("exit code not zero, thread {} exit.", thread_id::get());
+                            return;
+                        }
+                    },
+                    Err(err_code) => {
+                        log::error!("busybox cp in {:?} error with {}, thread {} exit.", workload, err_code, thread_id::get());
+                        return;
+                    }
+                }
+            }
+            // numactl -C [] emu -I 1000000 -i test_img
             let img_list = if let Some(dir) = config.img_list() { dir } else { IMG_LIST };
             let tasks = tasks::tasks_list(img_list);
             use rand::Rng;

@@ -1,5 +1,5 @@
-/// Git XSCommand Implementation
-/// 
+//! Git XSCommand Implementation
+//! 
 
 use super::{XSCommand, XSCommandErr, DefaultErr};
 use std::{
@@ -55,9 +55,12 @@ impl<'a> Git<'a> {
     }
 
     // git log
-    pub fn log(stdout: Option<&str>, stderr: Option<&str>) -> Result<i32, i32> {
+    pub fn log(stdout: Option<&str>, stderr: Option<&str>, workload: Option<&str>) -> Result<i32, i32> {
         let mut git = Git::new("git");
         git.set_args(vec!["log"]);
+        if let Err(err) = git.set_workdir(workload) {
+            return Err(err.err_code());
+        };
         match git.excute(stdout, stderr) {
             Ok(exit_code) => Ok(exit_code),
             Err(err) => Err(err.err_code()),

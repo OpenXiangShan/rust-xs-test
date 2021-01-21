@@ -1,5 +1,5 @@
-/// Just XSCommand Implementation
-/// 
+//! Just XSCommand Implementation
+//! 
 
 use std::{
     fs::File,
