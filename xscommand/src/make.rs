@@ -33,7 +33,7 @@ impl<'a> Make<'a> {
 
     pub fn emu(workload: Option<&str>) -> Result<i32, i32> {
         let mut make = Make::new("make");
-        make.set_args(vec!["build/emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-log\"", "EMU_THREADS=8", "-j10"]);
+        make.set_args(vec!["build/emu", "EMU_TRACE=1", "SIM_ARGS=\"--disable-log\"", "EMU_THREADS=8", "-j10"]);
         if let Err(err) = make.set_workdir(workload) {
             return Err(err.err_code());
         };

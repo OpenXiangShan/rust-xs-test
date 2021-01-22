@@ -25,7 +25,7 @@ impl<'a> Numactl<'a> {
         let thread_num = thread_num.to_string();
         let mut thread_num_arg =  "EMU_THREADS=".to_string();
         thread_num_arg.push_str(thread_num.as_str());
-        numactl.set_args(vec!["-C", "0-255", "make", "build/emu", "EMU_TARCE=1", "SIM_ARGS=\"--disable-log\"", thread_num_arg.as_str(), "-j256"]);
+        numactl.set_args(vec!["-C", "0-255", "make", "build/emu", "EMU_TRACE=1", "SIM_ARGS=\"--disable-log\"", thread_num_arg.as_str(), "-j256"]);
         if let Err(err) = numactl.set_workdir(workload) {
             return Err(err.err_code());
         };
