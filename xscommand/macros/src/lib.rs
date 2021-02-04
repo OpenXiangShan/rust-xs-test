@@ -87,10 +87,10 @@ pub fn xscommand_derive(input: TokenStream) -> TokenStream {
                 match res {
                     Ok(exit_status) => {
                         if let Some(exit_code) = exit_status.code() {
-                            log::info!("{} excute with exit code: {}", stringify!(#name).to_ascii_lowercase(), exit_code);
+                            log::info!("{} return with exit code: {}", stringify!(#name).to_ascii_lowercase(), exit_code);
                             Ok(exit_code)
                         } else {
-                            log::error!("{} excute return without exit code", stringify!(#name).to_ascii_lowercase());
+                            log::error!("{} return without exit code", stringify!(#name).to_ascii_lowercase());
                             return Err(DefaultErr::ExcuteErr(4));
                         }
                     },

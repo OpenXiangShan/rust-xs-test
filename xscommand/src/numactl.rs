@@ -52,7 +52,7 @@ impl<'a> Numactl<'a> {
             Err(_) => {
                 // TODO: specify exit code
                 let exit_code = -1;
-                log::error!("new CpuPercentCollector error, exit with {}", exit_code);
+                log::error!("New CpuPercentCollector error, exit with {}", exit_code);
                 return Err(exit_code);
             }
         };
@@ -61,7 +61,7 @@ impl<'a> Numactl<'a> {
             Err(_) => {
                 // TODO: specify exit code
                 let exit_code = -1;
-                log::error!("get cpu_percent_percpu error, exit with {}.", exit_code);
+                log::error!("Get cpu_percent_percpu error, exit with {}.", exit_code);
                 return Err(exit_code);
             }
         };
@@ -83,7 +83,7 @@ impl<'a> Numactl<'a> {
                 }
             }
             if (end - begin) >= (thread_num - 1) {
-                log::info!("found avaiable {} cpus, ready to run emu.", thread_num);
+                log::info!("Found avaiable {} cpus, ready to run emu.", thread_num);
                 break;
             }
             count += 1;
@@ -91,9 +91,9 @@ impl<'a> Numactl<'a> {
         }
         if count >= 3 {
             // TODO: specify exit code
-            let exit_code = -1;
-            log::error!("no {} cpus avaiable, exit with {}.", thread_num, exit_code);
-            return Err(-1);
+            let exit_code = -2;
+            log::error!("No {} cpus avaiable, exit with {}.", thread_num, exit_code);
+            return Err(exit_code);
         }
         let mut cpu_ids = begin.to_string();
         cpu_ids.push_str("-");
