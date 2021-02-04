@@ -5,7 +5,6 @@
 extern crate xscommand;
 extern crate simple_logger;
 extern crate threadpool;
-extern crate thread_id;
 extern crate chrono;
 extern crate psutil;
 extern crate toml;
@@ -75,7 +74,7 @@ fn main() -> ! {
                     Ok(_) => {}, // do nothing
                     Err(msg) => {
                         log::error!("Failed in creating workload {:?} with msg
-                        {} , thread {} exit.", workload, msg, thread_id::get());
+                        {} , thread exit.", workload, msg);
                         // TODO: specify exit code
                         return;
                     },
@@ -92,12 +91,12 @@ fn main() -> ! {
                     Ok(exit_code) => {
                         log::info!("git clone {} exit with {}", repo_url, exit_code);
                         if exit_code != 0 {
-                            log::error!("exit code not zero, thread {} exit.", thread_id::get());
+                            log::error!("exit code not zero, thread exit.");
                             return;
                         }
                     },
                     Err(err_code) => {
-                        log::error!("git clone {} error with {}, thread {} exit.", repo_url, err_code, thread_id::get());
+                        log::error!("git clone {} error with {}, thread exit.", repo_url, err_code);
                         return;
                     }
                 }
@@ -140,7 +139,7 @@ fn main() -> ! {
             let ram_h_contents = match fs::read_to_string(&ram_h) {
                 Ok(content) => content,
                 Err(_) => {
-                    log::error!("failed to read ram.h, thread {} exit.", thread_id::get());
+                    log::error!("failed to read ram.h, thread exit.");
                     return;
                 }
             };
@@ -157,7 +156,7 @@ fn main() -> ! {
                 let f = match fs::File::create(ram_h) {
                     Ok(ram_f) => ram_f,
                     Err(_) => {
-                        log::error!("failed to open ram.h, thread {} exit", thread_id::get());
+                        log::error!("failed to open ram.h, thread exit");
                         return;
                     }
                 };
@@ -166,14 +165,14 @@ fn main() -> ! {
                     match buf_writer.write(line.as_bytes()) {
                         Ok(_) => {},
                         Err(_) => {
-                            log::error!("BufWriter write line error, thread {} exit.", thread_id::get());
+                            log::error!("BufWriter write line error, thread exit.");
                             return;
                         }
                     }
                     match buf_writer.write(b"\n") {
                         Ok(_) => {},
                         Err(_) => {
-                            log::error!("BufWriter write \\n error, thread {} exit.", thread_id::get());
+                            log::error!("BufWriter write \\n error, thread exit.");
                             return;
                         }
                     }
@@ -206,7 +205,7 @@ fn main() -> ! {
                     Ok(_) => {}, // do nothing
                     Err(msg) => {
                         log::error!("Failed in creating res_dir {:?} with msg
-                        {} , thread {} exit.", res_dir, msg, thread_id::get());
+                        {} , thread exit.", res_dir, msg);
                         // TODO: specify exit code
                         return;
                     },
@@ -219,7 +218,7 @@ fn main() -> ! {
                 log::info!("create emu in {}", path);
                 path
             } else {
-                log::error!("no path in emu_path, thread {} exit", thread_id::get());
+                log::error!("no path in emu_path, thread exit");
                 return;
             };
 
@@ -258,7 +257,7 @@ fn main() -> ! {
                     //     }
                     // }
                 } else {
-                    log::error!("no XSSimTop.v in {:?}/build, thread {} exit.", xs_home, thread_id::get());
+                    log::error!("no XSSimTop.v in {:?}/build, thread exit.", xs_home);
                     return;
                 }
                 handle!(BusyBox::cp(emu, dir, workload.to_str()));
@@ -326,7 +325,7 @@ fn main() -> ! {
                 Ok(_) => log::info!("successed in removing workload."),
                 Err(e) => log::error!("{:?} occur when removing the workload, but go on", e),
             }
-            log::info!("thread {} return 0", thread_id::get());
+            log::info!("thread return 0");
         });
         thread::sleep(Duration::from_secs(sleep_time));
         assert!(pool.active_count() <= workers_num);
