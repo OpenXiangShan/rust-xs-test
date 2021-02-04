@@ -104,33 +104,37 @@ fn main() -> ! {
                 xs_home = workload.join(url2path(repo_url));
             }
             // enter XiangShan and make init
-            match Make::init(xs_home.to_str()) {
-                Ok(exit_code) => {
-                    log::info!("make init in {:?} exit with {}", xs_home, exit_code);
-                    if exit_code != 0 {
-                        log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                        return;
-                    }
-                },
-                Err(err_code) => {
-                    log::error!("make init in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
-                    return;
-                }
-            }
+            handle!(Make::init(xs_home.to_str()));
+            // match Make::init(xs_home.to_str()) {
+            //     Ok(exit_code) => {
+            //         log::info!("make init in {:?} exit with {}", xs_home, exit_code);
+            //         if exit_code != 0 {
+            //             log::error!("exit code not zero, thread {} exit.", thread_id::get());
+            //             return;
+            //         }
+            //     },
+            //     Err(err_code) => {
+            //         log::error!("make init in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
+            //         return;
+            //     }
+            // }
+
             // if use existing XiangShan proj, git pull
-            match Git::pull(xs_home.to_str()) {
-                Ok(exit_code) => {
-                    log::info!("git pull in {:?} exit with {}", xs_home, exit_code);
-                    if exit_code != 0 {
-                        log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                        return;
-                    }
-                },
-                Err(err_code) => {
-                    log::error!("git pull in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
-                    return;
-                }
-            }
+            handle!(Git::pull(xs_home.to_str()));
+            // match Git::pull(xs_home.to_str()) {
+            //     Ok(exit_code) => {
+            //         log::info!("git pull in {:?} exit with {}", xs_home, exit_code);
+            //         if exit_code != 0 {
+            //             log::error!("exit code not zero, thread {} exit.", thread_id::get());
+            //             return;
+            //         }
+            //     },
+            //     Err(err_code) => {
+            //         log::error!("git pull in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
+            //         return;
+            //     }
+            // }
+
             // change the ram size
             let ram_h = xs_home.join("src/test/csrc/ram.h");
             let ram_h_contents = match fs::read_to_string(&ram_h) {
@@ -175,23 +179,26 @@ fn main() -> ! {
                     }
                 }
             }
+
             // numatcl -C 0-255 make build/emu EMU_TRACE=1 SIM_ARGS="--disable-log" EMU_THREADS=thread_num -j256
             let thread_num = if let Some(num) = config.thread_num() { num } else { THREAD_NUM };
             let nemu_home = if let Some(path) = config.nemu_home() { path } else { NEMU_HOME };
             let am_home = if let Some(path) = config.am_home() { path } else { AM_HOME };
-            match Numactl::make_emu(xs_home.to_str(), nemu_home, am_home, thread_num) {
-                Ok(exit_code) => {
-                    log::info!("make emu in {:?} exit with {}", xs_home, exit_code);
-                    if exit_code != 0 {
-                        log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                        return;
-                    }
-                },
-                Err(err_code) => {
-                    log::error!("make emu in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
-                    return;
-                }
-            }
+            handle!(Numactl::make_emu(xs_home.to_str(), nemu_home, am_home, thread_num));
+            // match Numactl::make_emu(xs_home.to_str(), nemu_home, am_home, thread_num) {
+            //     Ok(exit_code) => {
+            //         log::info!("make emu in {:?} exit with {}", xs_home, exit_code);
+            //         if exit_code != 0 {
+            //             log::error!("exit code not zero, thread {} exit.", thread_id::get());
+            //             return;
+            //         }
+            //     },
+            //     Err(err_code) => {
+            //         log::error!("make emu in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
+            //         return;
+            //     }
+            // }
+            
             // create ./emu_res dir && 
             let res_dir = workload.join("./emu_res");
             if !res_dir.exists() {
@@ -215,56 +222,61 @@ fn main() -> ! {
                 log::error!("no path in emu_path, thread {} exit", thread_id::get());
                 return;
             };
+
             // git log > workload/git_log.txt
             let git_log_f = workload.join("git_log.txt");
-            match Git::log(git_log_f.to_str(), None, xs_home.to_str()) {
-                Ok(exit_code) => {
-                    log::info!("git log in {:?} exit with {}", xs_home, exit_code);
-                    if exit_code != 0 {
-                        log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                        return;
-                    }
-                },
-                Err(err_code) => {
-                    log::error!("git log in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
-                    return;
-                }
-            }
+            handle!(Git::log(git_log_f.to_str(), None, xs_home.to_str()));
+            // match Git::log(git_log_f.to_str(), None, xs_home.to_str()) {
+            //     Ok(exit_code) => {
+            //         log::info!("git log in {:?} exit with {}", xs_home, exit_code);
+            //         if exit_code != 0 {
+            //             log::error!("exit code not zero, thread {} exit.", thread_id::get());
+            //             return;
+            //         }
+            //     },
+            //     Err(err_code) => {
+            //         log::error!("git log in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
+            //         return;
+            //     }
+            // }
             // cp XSSimTop.v && emu workload/
             let src_v = xs_home.join("build/XSSimTop.v");
             if let Some(dir) = workload.to_str() {
                 if let Some(v) = src_v.to_str() {
-                    match BusyBox::cp(v, dir, workload.to_str()) {
-                        Ok(exit_code) => {
-                            log::info!("busybox cp in {:?} exit with {}", workload, exit_code);
-                            if exit_code != 0 {
-                                log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                                return;
-                            }
-                        },
-                        Err(err_code) => {
-                            log::error!("busybox cp in {:?} error with {}, thread {} exit.", workload, err_code, thread_id::get());
-                            return;
-                        }
-                    }
+                    handle!(BusyBox::cp(v, dir, workload.to_str()));
+                    // match BusyBox::cp(v, dir, workload.to_str()) {
+                    //     Ok(exit_code) => {
+                    //         log::info!("busybox cp in {:?} exit with {}", workload, exit_code);
+                    //         if exit_code != 0 {
+                    //             log::error!("exit code not zero, thread {} exit.", thread_id::get());
+                    //             return;
+                    //         }
+                    //     },
+                    //     Err(err_code) => {
+                    //         log::error!("busybox cp in {:?} error with {}, thread {} exit.", workload, err_code, thread_id::get());
+                    //         return;
+                    //     }
+                    // }
                 } else {
                     log::error!("no XSSimTop.v in {:?}/build, thread {} exit.", xs_home, thread_id::get());
                     return;
                 }
-                match BusyBox::cp(emu, dir, workload.to_str()) {
-                    Ok(exit_code) => {
-                        log::info!("busybox cp in {:?} exit with {}", workload, exit_code);
-                        if exit_code != 0 {
-                            log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                            return;
-                        }
-                    },
-                    Err(err_code) => {
-                        log::error!("busybox cp in {:?} error with {}, thread {} exit.", workload, err_code, thread_id::get());
-                        return;
-                    }
-                }
+                handle!(BusyBox::cp(emu, dir, workload.to_str()));
+                // match BusyBox::cp(emu, dir, workload.to_str()) {
+                //     Ok(exit_code) => {
+                //         log::info!("busybox cp in {:?} exit with {}", workload, exit_code);
+                //         if exit_code != 0 {
+                //             log::error!("exit code not zero, thread {} exit.", thread_id::get());
+                //             return;
+                //         }
+                //     },
+                //     Err(err_code) => {
+                //         log::error!("busybox cp in {:?} error with {}, thread {} exit.", workload, err_code, thread_id::get());
+                //         return;
+                //     }
+                // }
             }
+
             // numactl -C [] emu -I 1000000 -i test_img
             let img_list = if let Some(dir) = config.img_list() { dir } else { IMG_LIST };
             let tasks = tasks::tasks_list(img_list);
@@ -272,37 +284,49 @@ fn main() -> ! {
             let mut task_id = rand::thread_rng();
             let img = tasks[task_id.gen_range(0..tasks.len())].as_str();
             let max_instr = if let Some(max) = config.max_instr() { max } else { MAX_INSTR };
-            match Numactl::run_emu(
-                xs_home.to_str(),
-                stdout_f.to_str(),
-                stderr_f.to_str(),
-                emu,
-                img,
-                nemu_home,
-                am_home,
-                thread_num,
-                max_instr
-            ) {
-                    Ok(exit_code) => {
-                        log::info!("run emu in {:?} exit with {}", xs_home, exit_code);
-                        if exit_code != 0 && exit_code != 3 {
-                            // TODO: go back 10000 cycleCnt and dump waves 
-                            log::error!("exit code not zero, thread {} exit.", thread_id::get());
-                            return;
-                        }
-                    },
-                    Err(err_code) => {
-                        log::error!("run emu in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
-                        return;
-                    }
-                }
+            handle!(
+                Numactl::run_emu(
+                    xs_home.to_str(),
+                    stdout_f.to_str(),
+                    stderr_f.to_str(),
+                    emu,
+                    img,
+                    nemu_home,
+                    am_home,
+                    thread_num,
+                    max_instr
+                )
+            );
+            // match Numactl::run_emu(
+            //     xs_home.to_str(),
+            //     stdout_f.to_str(),
+            //     stderr_f.to_str(),
+            //     emu,
+            //     img,
+            //     nemu_home,
+            //     am_home,
+            //     thread_num,
+            //     max_instr
+            // ) {
+            //         Ok(exit_code) => {
+            //             log::info!("run emu in {:?} exit with {}", xs_home, exit_code);
+            //             if exit_code != 0 && exit_code != 3 {
+            //                 // TODO: go back 10000 cycleCnt and dump waves 
+            //                 log::error!("exit code not zero, thread {} exit.", thread_id::get());
+            //                 return;
+            //             }
+            //         },
+            //         Err(err_code) => {
+            //             log::error!("run emu in {:?} error with {}, thread {} exit.", xs_home, err_code, thread_id::get());
+            //             return;
+            //         }
+            //     }
             // everything seems to be going well, delete the workload
             match fs::remove_dir_all(workload) {
                 Ok(_) => log::info!("successed in removing workload."),
                 Err(e) => log::error!("{:?} occur when removing the workload, but go on", e),
             }
             log::info!("thread {} return 0", thread_id::get());
-            
         });
         thread::sleep(Duration::from_secs(sleep_time));
         assert!(pool.active_count() <= workers_num);
@@ -336,6 +360,59 @@ fn url2path(url: &str) -> &str {
     let url: Vec<&str> = url.split('/').collect();
     let path = url[url.len() - 1];
     &path[..(path.len() - 4)]
+}
+
+#[macro_export]
+macro_rules! handle {
+    ($e:expr) => {
+        match $e {
+            Ok(code) => {
+                match code {
+                    0 => {}, // no error occur, do nothing
+                    1 => {
+                        // TODO
+                        return;
+                    },
+                    2 => {
+                        // TODO
+                        return;
+                    },
+                    3 => {}, // emu run at limited instruction, do nothing
+                    _ => {
+                        panic!("Unhandle Exit Code");
+                    }
+                }
+            },
+            Err(code) => {
+                match code {
+                    0 => {}, // no error, do nothing
+                    1 => {
+                        log::error!("Set WorkDir Error");
+                        return;
+                    },
+                    2 => {
+                        log::error!("Create Stdout File Error");
+                        return;
+                    },
+                    3 => {
+                        log::error!("Create Stderr File Error");
+                        return;
+                    },
+                    4 => {
+                        log::error!("Execute Without Exit Code");
+                        return;
+                    },
+                    5 => {
+                        log::error!("Execute Return Error");
+                        return;
+                    },
+                    _ => {
+                        panic!("Unhandle Error Code");
+                    }
+                }
+            }
+        }
+    };
 }
 
 #[test]

@@ -63,6 +63,13 @@ impl XSCommandErr for DefaultErr {
             DefaultErr::ExcuteErr(_) => "Default Excute Error",
         }
     }
+    /// Error code:
+    /// + no error -> 0
+    /// + set workdir error -> 1
+    /// + create stdout file error -> 2
+    /// + create stderr file error -> 3
+    /// + execute without exit code -> 4
+    /// + execute return error -> 5
     fn err_code(&self) -> i32 {
         match self {
             DefaultErr::SetWorkDirErr => 1,
