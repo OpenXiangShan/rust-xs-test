@@ -42,6 +42,18 @@ impl<'a> Make<'a> {
             Err(err) => Err(err.err_code()),
         }
     }
+
+    pub fn clean(workload: Option<&str>) -> Result<i32, i32> {
+        let mut make = Make::new("make");
+        make.set_args(vec!["clean"]);
+        if let Err(err) = make.set_workdir(workload) {
+            return Err(err.err_code());
+        };
+        match make.excute(None, None) {
+            Ok(exit_code) => Ok(exit_code),
+            Err(err) => Err(err.err_code()),
+        }
+    }
 }
 
 #[test]
